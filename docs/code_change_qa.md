@@ -808,32 +808,3 @@ New:
 ```js
 let y_label = g_scatterplot.selectAll(".y_label").data([isLdaData ? "LDA 2" : "Rating"])
 ```
-
-### Q25: How do I make a page title more specific?
-
-Answer:
-Replace the generic page title text with a name that describes the dataset or topic.
-
-Original:
-
-```html
-<title>Visualization Dashboard</title>
-```
-
-New:
-
-```html
-<title>Board Game Analytics</title>
-```
-
-Original:
-
-```html
-<div class="banner">Visualization Dashboard</div>
-```
-
-New:
-
-```html
-<div class="banner">Board Game Analytics</div>
-```
