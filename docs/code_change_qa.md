@@ -809,10 +809,10 @@ New:
 let y_label = g_scatterplot.selectAll(".y_label").data([isLdaData ? "LDA 2" : "Rating"])
 ```
 
-### Q25: How do I make a simple interface look cleaner by changing only CSS colors?
+### Q25: How do I use hex color codes for CSS backgrounds, text, and borders?
 
 Answer:
-Change the existing background, text, border, and hover colors without changing layout or JavaScript.
+Use CSS color properties such as `background`, `color`, `border`, and `border-color` with hex color codes.
 
 Original:
 
