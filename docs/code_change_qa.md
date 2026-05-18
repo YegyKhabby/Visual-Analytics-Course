@@ -808,3 +808,117 @@ New:
 ```js
 let y_label = g_scatterplot.selectAll(".y_label").data([isLdaData ? "LDA 2" : "Rating"])
 ```
+
+### Q25: How do I make a simple interface look cleaner by changing only CSS colors?
+
+Answer:
+Change the existing background, text, border, and hover colors without changing layout or JavaScript.
+
+Original:
+
+```css
+.banner {
+  grid-area: banner;
+  background: rgb(120, 150, 196);
+```
+
+New:
+
+```css
+.banner {
+  grid-area: banner;
+  background: #284b63;
+  color: white;
+```
+
+Original:
+
+```css
+.sidepanel {
+  grid-area: sidepanel;
+  background: rgb(202, 202, 202);
+  padding: 20px;
+}
+```
+
+New:
+
+```css
+.sidepanel {
+  grid-area: sidepanel;
+  background: #eef3f7;
+  color: #1f2d36;
+  padding: 20px;
+}
+```
+
+Original:
+
+```css
+.button {
+    /* 300px: width if the sidepanel defined in the grid-template for #root */
+    /* 40px = 2 times 20px padding in .sidepanel */
+    width: calc(300px - 40px);
+    border-radius: 20px;
+    height: 50px;
+    font-size: 1.2em;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.button:hover {
+    background: rgb(180, 180, 180);
+}
+```
+
+New:
+
+```css
+.button {
+    /* 300px: width if the sidepanel defined in the grid-template for #root */
+    /* 40px = 2 times 20px padding in .sidepanel */
+    width: calc(300px - 40px);
+    border-radius: 20px;
+    height: 50px;
+    font-size: 1.2em;
+    font-weight: bold;
+    background: white;
+    border: 2px solid #284b63;
+    color: #1f2d36;
+
+    cursor: pointer;
+}
+
+.button:hover {
+    border-color: #f2a93b;
+}
+```
+
+Original:
+
+```css
+input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+```
+
+New:
+
+```css
+input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #c6d3dd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+```
