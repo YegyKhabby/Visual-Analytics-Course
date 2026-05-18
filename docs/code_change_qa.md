@@ -809,10 +809,10 @@ New:
 let y_label = g_scatterplot.selectAll(".y_label").data([isLdaData ? "LDA 2" : "Rating"])
 ```
 
-### Q25: How do I use hex color codes for CSS backgrounds, text, and borders?
+### Q25: What hex color codes can I use for dark blue, light blue, orange accent, and dark text in CSS?
 
 Answer:
-Use CSS color properties such as `background`, `color`, `border`, and `border-color` with hex color codes.
+You can use `#284b63` for dark blue, `#eef3f7` for light blue, `#f2a93b` for orange accent, `#1f2d36` for dark text, and `#c6d3dd` for a soft border.
 
 Original:
 
