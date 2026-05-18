@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualization Dashboard</title>
+  </head>
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <div class="root" id="root">
+      <div class="banner">Visualization Dashboard</div>
+      <div class="sidepanel">
+        <button id="load_data_button" class="button">Load data</button>
+        <label for="rank_low">Top rank cutoff</label>
+        <input
+          type="text"
+          id="rank_low"
+          value="25"
+          name="rank_low"
+        />
+        <label for="rank_high">Middle rank cutoff</label>
+        <input
+          type="text"
+          id="rank_high"
+          value="75"
+          name="rank_high"
+        />
+        <button id="load_lda_button" class="button">Run LDA</button>
+      </div>
+      <div class="visualizations">
+        <div class="scatterplot">
+          <svg class="svg_root" id="scatterplot_svg">
+            <g id="g_x_axis_scatterplot"></g>
+            <g id="g_y_axis_scatterplot"></g>
+            <g id="g_scatterplot"></g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
