@@ -126,4 +126,50 @@ export function draw_scatterplot(data) {
     .text((d) => d)
 
   y_label.exit().remove()
+
+    /**
+   * Drawing the legend for LDA Data
+   */
+  // We only want to show the legend when displaying LDA data
+  const legendData = isLdaData ? Object.keys(groupColor) : []
+
+  let legend = g_scatterplot.selectAll(".legend-group").data(legendData)
+
+  let legendEnter = legend
+    .enter()
+    .append("g")
+    .attr("class", "legend-group")
+
+  // Append color rectangles
+  legendEnter
+    .append("rect")
+    .attr("class", "legend-rect")
+    .attr("width", 15)
+    .attr("height", 15)
+
+  // Append text labels
+  legendEnter
+    .append("text")
+    .attr("class", "legend-text")
+    .attr("x", 25)
+    .attr("y", 12)
+    .style("font-size", "12px")
+    .style("text-transform", "capitalize") // Capitalizes 'top', 'middle', 'lower'
+
+  // Update the group positioning (placed in the top right corner)
+  let legendMerge = legendEnter.merge(legend)
+    .attr("transform", (d, i) => "translate(" + (width - margin.right - 60) + "," + (margin.top + i * 20) + ")")
+
+  // Update colored rectangles
+  legendMerge.select(".legend-rect")
+    .attr("fill", (d) => groupColor[d])
+
+  // Update text labels
+  legendMerge.select(".legend-text")
+    .text((d) => d)
+
+  // Remove legend if no longer needed
+  legend.exit().remove()
+
+
 }

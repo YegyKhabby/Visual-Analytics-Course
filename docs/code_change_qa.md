@@ -808,3 +808,62 @@ New:
 ```js
 let y_label = g_scatterplot.selectAll(".y_label").data([isLdaData ? "LDA 2" : "Rating"])
 ```
+
+### Q999: How do I add a simple legend to explain the colors for the LDA?
+
+Answer:
+To add a simple legend for your LDA colors, you can use D3's enter/update/exit pattern to dynamically draw the legend entries when `isLdaData` is true.
+
+Original:
+
+```js
+// No equivalent code in the original template.
+```
+
+New:
+
+```js
+  /**
+   * Drawing the legend for LDA Data
+   */
+  // We only want to show the legend when displaying LDA data
+  const legendData = isLdaData ? Object.keys(groupColor) : []
+
+  let legend = g_scatterplot.selectAll(".legend-group").data(legendData)
+
+  let legendEnter = legend
+    .enter()
+    .append("g")
+    .attr("class", "legend-group")
+
+  // Append color rectangles
+  legendEnter
+    .append("rect")
+    .attr("class", "legend-rect")
+    .attr("width", 15)
+    .attr("height", 15)
+
+  // Append text labels
+  legendEnter
+    .append("text")
+    .attr("class", "legend-text")
+    .attr("x", 25)
+    .attr("y", 12)
+    .style("font-size", "12px")
+    .style("text-transform", "capitalize") // Capitalizes 'top', 'middle', 'lower'
+
+  // Update the group positioning (placed in the top right corner)
+  let legendMerge = legendEnter.merge(legend)
+    .attr("transform", (d, i) => "translate(" + (width - margin.right - 60) + "," + (margin.top + i * 20) + ")")
+
+  // Update colored rectangles
+  legendMerge.select(".legend-rect")
+    .attr("fill", (d) => groupColor[d])
+
+  // Update text labels
+  legendMerge.select(".legend-text")
+    .text((d) => d)
+
+  // Remove legend if no longer needed
+  legend.exit().remove()
+  ```
