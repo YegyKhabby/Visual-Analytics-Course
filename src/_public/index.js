@@ -32,6 +32,7 @@ let requestData = (parameters) => {
  * Assigning the callback to request the data on click.
  */
 document.getElementById("load_data_button").onclick = () => {
+  document.getElementById("title").textContent = "Loading...";
   requestData({})
 }
 
@@ -56,6 +57,22 @@ let handleData = (payload) => {
   console.log(`Fresh data from Webserver:`)
   console.log(payload)
   data.scatterplot = payload.data
+
+  // Check if we requested LDA mode
+  if (payload.parameters && payload.parameters.mode === "lda") {
+    // Handle the title for LDA Button
+    document.getElementById("title").textContent = "LDA1 vs LDA2";
+  } else {
+    // Handle the title for the regular Data Button dynamically
+    let samplePoint = data.scatterplot[0];
+    
+    // Extract keys and filter out 'title' (and maybe 'group' if it exists)
+    let variables = Object.keys(samplePoint).filter(key => key !== 'title' && key !== 'group');
+    if (variables.length >= 2) {
+      document.getElementById("title").textContent = `${variables[0]} vs ${variables[1]}`;
+    }
+  }
+
   draw_scatterplot(data.scatterplot)
 }
 
