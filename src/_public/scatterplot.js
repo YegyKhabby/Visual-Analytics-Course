@@ -27,6 +27,7 @@ export function draw_scatterplot(data) {
    */
   let width = parseInt(svg.style("width"))
   let height = parseInt(svg.style("height"))
+  const tooltip = d3.select("#tooltip")
   const isLdaData = data.length > 0 && data[0].lda1 !== undefined
   const groupColor = {
     top: "#2f80ed",
@@ -52,6 +53,10 @@ export function draw_scatterplot(data) {
     .domain(d3.extent(data.map((d) => isLdaData ? d.lda2 : d.rating)))
     .range([height - margin.top - margin.bottom, 0])
 
+  const rScale = d3.scaleSqrt()
+    .domain(d3.extent(data.map((d) => d.num_of_reviews || 0)))
+    .range([3, 15])
+
   /**
    * Drawing the data itself as circles
    */
@@ -65,9 +70,20 @@ export function draw_scatterplot(data) {
     .attr("class", "scatterplot_circle")
     .merge(scatterplot_circle)
     .attr("fill", (d) => isLdaData ? groupColor[d.group] : "orange")
-    .attr("r", 5)
+    .attr("r", (d) => isLdaData ? 5 : rScale(d.num_of_reviews))
     .attr("cx", (d) => margin.left + xScale(isLdaData ? d.lda1 : d.maxplaytime))
     .attr("cy", (d) => yScale(isLdaData ? d.lda2 : d.rating) + margin.top)
+    .on("mouseover", (event, d) => {
+      tooltip.style("display", "block").text(d.title)
+    })
+    .on("mousemove", (event) => {
+      tooltip
+        .style("left", (event.pageX + 12) + "px")
+        .style("top", (event.pageY - 28) + "px")
+    })
+    .on("mouseout", () => {
+      tooltip.style("display", "none")
+    })
 
   scatterplot_circle.exit().remove()
 
@@ -126,4 +142,33 @@ export function draw_scatterplot(data) {
     .text((d) => d)
 
   y_label.exit().remove()
+
+  /**
+   * Drawing the legend for LDA groups
+   */
+  g_scatterplot.selectAll(".legend_item").remove()
+
+  if (isLdaData) {
+    const legendData = [
+      { label: "Top", color: groupColor.top },
+      { label: "Middle", color: groupColor.middle },
+      { label: "Lower", color: groupColor.lower },
+    ]
+
+    legendData.forEach((entry, i) => {
+      const g = g_scatterplot.append("g")
+        .attr("class", "legend_item")
+        .attr("transform", `translate(${width - margin.right + 5}, ${margin.top + 10 + i * 22})`)
+
+      g.append("circle")
+        .attr("r", 6)
+        .attr("fill", entry.color)
+
+      g.append("text")
+        .attr("x", 12)
+        .attr("y", 5)
+        .text(entry.label)
+        .style("font-size", "12px")
+    })
+  }
 }

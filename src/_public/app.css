@@ -71,6 +71,17 @@ head,
     border-color: #f2a93b;
 }
 
+#tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid #c6d3dd;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.85em;
+  pointer-events: none;
+  display: none;
+}
+
 input[type=text], select {
     width: 100%;
     padding: 12px 20px;

@@ -31,7 +31,7 @@ function calculateLdaProjection(rawGames, parameters) {
     }
   })
 
-  const featureNames = ["rating", "reviews", "year", "minage", "minplayers", "maxplayers", "minplaytime", "maxplaytime"]
+  const featureNames = ["year", "minage", "minplayers", "maxplayers", "minplaytime", "maxplaytime"]
   const ranges = {}
 
   for (const feature of featureNames) {
