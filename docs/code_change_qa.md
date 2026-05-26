@@ -809,10 +809,9 @@ New:
 let y_label = g_scatterplot.selectAll(".y_label").data([isLdaData ? "LDA 2" : "Rating"])
 ```
 
-### Q999: How do I add a simple legend to explain the colors for the LDA?
+### Q999: How do I add a simple legend to explain the colors geenrated for a projection?
 
-Answer:
-To add a simple legend for your LDA colors, you can use D3's enter/update/exit pattern to dynamically draw the legend entries when `isLdaData` is true.
+Answer: Use a D3 enter/update/exit pattern to dynamically draw color legend entries when projection data properties exist.
 
 Original:
 
@@ -868,9 +867,9 @@ New:
   legend.exit().remove()
   ```
 
-### Q998: How can I change the title dynamically by pulling the 2 variable used in the load_data_button so that it would be a vs b if the variables were a and b.?
+### Q998: How can I change the title dynamically by pulling the 2 variable used in the plooted data so that it would be a vs b if the variables were a and b?
 
-Answer:The best way to make the title dynamic is to extract the variable names from the incoming data keys in the handleData function, and then dynamically update the title using template literals.
+Answer: Extract the variable keys from the initial data point received via the payload and use them to construct an updated title string before drawing the chart.
 
 Original:
 
@@ -889,9 +888,9 @@ document.getElementById("load_data_button").onclick = () => {
 }
 ```
 
-### Q997:I have another button called load_lda_button. It uses same socket. The title is wrong for it. What is the best way to handle it? Should I create a new socket?
+### Q997: How can I handle different visualization modes with a socket without creating a new one?
 
-Answer: No, you do not need to create a new socket. It's actually much better to keep the same socket and reuse the single getData / freshData flow. You can simply check payload.parameters.mode inside your handleData function in index.js to decide what the title should be.
+Answer: Keep the existing single socket structure. Assign a specific mode instruction to the request payload parameter block and handle title or UI modifications dynamically inside the central data handler function by checking that mode.
 
 Original:
 
