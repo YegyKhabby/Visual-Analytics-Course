@@ -930,3 +930,274 @@ let handleData = (payload) => {
   draw_scatterplot(data.scatterplot)
 }
 ```
+
+### Q996:Based on boardgames_100.json data I want the webserver to have checkboxes for every categories and checkboxes for every mechanics. This checkboxes should act as a filter to filter the boardgames selected. Also because there are so many categories and mechanics, there should be a search box above the checkboxes. Both categories and mechanics should be in different lists so that user can expand and collapse these lists seperately. This filtering should not prevent or break other functions
+
+Original:
+
+```js
+// No equivalent code in the original template.
+```
+
+New:
+
+```js
+socket.on("getInitData", () => {
+    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+      const rawGames = JSON.parse(fileContent)
+      
+      const categories = [...new Set(rawGames.flatMap(g => g.types.categories || []).map(c => c.name))].filter(Boolean).sort()
+      const mechanics = [...new Set(rawGames.flatMap(g => g.types.mechanics || []).map(m => m.name))].filter(Boolean).sort()
+
+      socket.emit("initData", { categories, mechanics })
+    })
+  })
+```
+
+Original:
+
+```js
+socket.on("getData", (obj) => {
+    console.log(`Data request with properties ${JSON.stringify(obj)}...`)
+
+    let parameters = obj.parameters
+
+    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      const rawGames = JSON.parse(fileContent)
+      const games =
+        parameters.mode === "lda"
+          ? calculateLdaProjection(rawGames, parameters)
+          : preprocess_boardgames(rawGames)
+
+      socket.emit("freshData", {
+        timestamp: new Date().getTime(),
+        data: games,
+        parameters: parameters,
+      })
+      console.log(`freshData emitted`)
+    })
+  })
+```
+
+New:
+
+```js
+socket.on("getData", (obj) => {
+    console.log(`Data request with properties ${JSON.stringify(obj)}...`)
+
+    let parameters = obj.parameters
+
+    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      let rawGames = JSON.parse(fileContent)
+
+      // Filtering logic
+      if (parameters.selectedCategories && parameters.selectedCategories.length > 0) {
+        rawGames = rawGames.filter(game => {
+          const gameCats = (game.types.categories || []).map(c => c.name);
+          return parameters.selectedCategories.some(cat => gameCats.includes(cat));
+        });
+      }
+      
+      if (parameters.selectedMechanics && parameters.selectedMechanics.length > 0) {
+        rawGames = rawGames.filter(game => {
+          const gameMechs = (game.types.mechanics || []).map(m => m.name);
+          return parameters.selectedMechanics.some(mech => gameMechs.includes(mech));
+        });
+      }
+
+      let games = [];
+      if (rawGames.length > 0) {
+        games = parameters.mode === "lda"
+            ? calculateLdaProjection(rawGames, parameters)
+            : preprocess_boardgames(rawGames)
+      }
+
+      socket.emit("freshData", {
+        timestamp: new Date().getTime(),
+        data: games,
+        parameters: parameters,
+      })
+      console.log(`freshData emitted`)
+    })
+  })
+```
+
+Original:
+
+```js
+// No equivalent code in the original template.
+```
+
+New:
+
+```js
+<details id="categories_details">
+          <summary>Categories</summary>
+          <input type="text" id="categories_search" placeholder="Search categories..." />
+          <div id="categories_list"></div>
+        </details>
+        
+        <details id="mechanics_details">
+          <summary>Mechanics</summary>
+          <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
+          <div id="mechanics_list"></div>
+        </details>
+```
+
+Original:
+
+```js
+// No equivalent code in the original template.
+```
+
+New:
+
+```js
+#categories_list, #mechanics_list {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  background: white;
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.checkbox-wrapper {
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-wrapper input {
+  margin-right: 8px;
+}
+
+details {
+  margin-top: 15px;
+  cursor: pointer;
+}
+summary {
+  font-weight: bold;
+}
+```
+
+Original:
+
+```js
+socket.on("connect", () => {
+  console.log("Connected to " + socketUrl + ".")
+})
+```
+
+New:
+
+```js
+socket.on("connect", () => {
+  console.log("Connected to " + socketUrl + ".")
+  socket.emit("getInitData")
+})
+```
+
+Original:
+
+```js
+// No equivalent code in the original template.
+```
+
+New:
+
+```js
+socket.on("initData", (payload) => {
+  console.log("Received initial data:", payload);
+  
+  const setupCheckboxes = (items, listElementId) => {
+    const listEl = document.getElementById(listElementId);
+    listEl.innerHTML = '';
+    items.forEach(item => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'checkbox-wrapper';
+      
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = `${listElementId}_${item}`;
+      checkbox.value = item;
+      checkbox.className = `${listElementId}_checkbox`;
+      
+      const label = document.createElement('label');
+      label.htmlFor = checkbox.id;
+      label.textContent = item;
+      
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(label);
+      listEl.appendChild(wrapper);
+    });
+  };
+
+  setupCheckboxes(payload.categories, "categories_list");
+  setupCheckboxes(payload.mechanics, "mechanics_list");
+});
+
+const setupSearch = (searchInputId, listElementId) => {
+  document.getElementById(searchInputId).addEventListener("input", (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const listEl = document.getElementById(listElementId);
+    const wrappers = listEl.getElementsByClassName("checkbox-wrapper");
+    Array.from(wrappers).forEach(wrapper => {
+      const labelText = wrapper.textContent.toLowerCase();
+      if (labelText.includes(searchTerm)) {
+        wrapper.style.display = "";
+      } else {
+        wrapper.style.display = "none";
+      }
+    });
+  });
+};
+
+setupSearch("categories_search", "categories_list");
+setupSearch("mechanics_search", "mechanics_list");
+```
+
+Original:
+
+```js
+let requestData = (parameters) => {
+  console.log(`requesting data from webserver (every 2sec)`)
+
+  socket.emit("getData", {
+    parameters,
+  })
+}
+```
+
+New:
+
+```js
+let requestData = (parameters) => {
+  console.log(`requesting data from webserver (every 2sec)`)
+
+  const selectedCategories = Array.from(document.querySelectorAll('.categories_list_checkbox:checked')).map(cb => cb.value);
+  const selectedMechanics = Array.from(document.querySelectorAll('.mechanics_list_checkbox:checked')).map(cb => cb.value);
+
+  socket.emit("getData", {
+    parameters: {
+      ...parameters,
+      selectedCategories,
+      selectedMechanics
+    }
+  })
+}
+```

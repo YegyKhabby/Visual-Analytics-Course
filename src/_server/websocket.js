@@ -2,6 +2,7 @@ import * as fs from "fs"
 import * as druid from "@saehrimnir/druidjs"
 import { print_clientConnected, print_clientDisconnected } from "./static/utils.js"
 import { preprocess_boardgames } from "./preprocessing.js"
+import { preprocess_boardgames_in_detail } from "./preprocessing.js"
 
 const file_path = "data/"
 const file_name = "boardgames_100.json"
@@ -79,6 +80,21 @@ export function setupConnection(socket) {
     print_clientDisconnected(socket.id)
   })
 
+  socket.on("getInitData", () => {
+    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+      const rawGames = JSON.parse(fileContent)
+      
+      const categories = [...new Set(rawGames.flatMap(g => g.types.categories || []).map(c => c.name))].filter(Boolean).sort()
+      const mechanics = [...new Set(rawGames.flatMap(g => g.types.mechanics || []).map(m => m.name))].filter(Boolean).sort()
+
+      socket.emit("initData", { categories, mechanics })
+    })
+  })
+
   /**
    * # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
    * 
@@ -113,11 +129,29 @@ export function setupConnection(socket) {
         return
       }
 
-      const rawGames = JSON.parse(fileContent)
-      const games =
-        parameters.mode === "lda"
-          ? calculateLdaProjection(rawGames, parameters)
-          : preprocess_boardgames(rawGames)
+      let rawGames = JSON.parse(fileContent)
+
+      // Filtering logic
+      if (parameters.selectedCategories && parameters.selectedCategories.length > 0) {
+        rawGames = rawGames.filter(game => {
+          const gameCats = (game.types.categories || []).map(c => c.name);
+          return parameters.selectedCategories.some(cat => gameCats.includes(cat));
+        });
+      }
+      
+      if (parameters.selectedMechanics && parameters.selectedMechanics.length > 0) {
+        rawGames = rawGames.filter(game => {
+          const gameMechs = (game.types.mechanics || []).map(m => m.name);
+          return parameters.selectedMechanics.some(mech => gameMechs.includes(mech));
+        });
+      }
+
+      let games = [];
+      if (rawGames.length > 0) {
+        games = parameters.mode === "lda"
+            ? calculateLdaProjection(rawGames, parameters)
+            : preprocess_boardgames(rawGames)
+      }
 
       socket.emit("freshData", {
         timestamp: new Date().getTime(),

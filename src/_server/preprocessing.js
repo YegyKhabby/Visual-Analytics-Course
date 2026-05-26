@@ -54,6 +54,25 @@ export function preprocess_boardgames(games) {
     }
   })
 }
+
+export function preprocess_boardgames_in_detail(games) {
+  return games.map((game) => {
+    return {
+      title: game.title,
+      year: game.year,
+      minplayers: game.minplayers,
+      maxplayers: game.maxplayers,
+      minplaytime: game.minplaytime,
+      maxplaytime: game.maxplaytime,
+      minage: game.minage,
+      rating: game.rating.rating,
+      categories: game.types.categories,
+      mechanics: game.types.mechanics,
+      designer: game.credit.designer,
+    }
+  })
+}
+
 /**
  * Test add function to demonstrate testing with jest in file preprocessing.test.js
  *
