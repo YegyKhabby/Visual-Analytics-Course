@@ -931,7 +931,9 @@ let handleData = (payload) => {
 }
 ```
 
-### Q996:Based on boardgames_100.json data I want the webserver to have checkboxes for every categories and checkboxes for every mechanics. This checkboxes should act as a filter to filter the boardgames selected. Also because there are so many categories and mechanics, there should be a search box above the checkboxes. Both categories and mechanics should be in different lists so that user can expand and collapse these lists seperately. This filtering should not prevent or break other functions
+### Q996: How can I add collapsible checkbox lists with search function to the webserver to dynamically filter the JSON data?
+
+Answer: Extract the unique values for the properties on the server and emit them upon initialization so the client can build collapsible checkbox lists with text search. Include the selected checkboxes in the standard data request, and filter the resulting dataset on the server before applying subsequent data transformations.
 
 Original:
 
