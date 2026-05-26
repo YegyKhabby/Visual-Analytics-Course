@@ -11,20 +11,21 @@
       <div class="banner" id="title">Board Game Analytics</div>
       <div class="sidepanel">
         <button id="load_data_button" class="button">Load data</button>
-        <label for="rank_low">Top rank cutoff</label>
+        <label for="rank_low">Top group — games ranked 1 to:</label>
         <input
           type="text"
           id="rank_low"
           value="25"
           name="rank_low"
         />
-        <label for="rank_high">Middle rank cutoff</label>
+        <label for="rank_high">Middle group — games ranked up to:</label>
         <input
           type="text"
           id="rank_high"
           value="75"
           name="rank_high"
         />
+        <p class="rank_hint">Everything beyond = Lower group</p>
         <button id="load_lda_button" class="button">Run LDA</button>
 
         <details id="categories_details">

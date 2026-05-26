@@ -29,6 +29,14 @@ export function draw_scatterplot(data) {
   let height = parseInt(svg.style("height"))
   const tooltip = d3.select("#tooltip")
   const isLdaData = data.length > 0 && data[0].lda1 !== undefined
+
+  if (data.length === 0) {
+    g_scatterplot.selectAll(".scatterplot_circle").remove()
+    g_scatterplot.selectAll(".x_label").remove()
+    g_scatterplot.selectAll(".y_label").remove()
+    g_scatterplot.selectAll(".legend_item").remove()
+    return
+  }
   const groupColor = {
     top: "#2f80ed",
     middle: "#f2a93b",
@@ -48,9 +56,11 @@ export function draw_scatterplot(data) {
   /**
    * Scale unction for the y-axis
    */
+  const yExtent = d3.extent(data.map((d) => isLdaData ? d.lda2 : d.rating))
+  if (yExtent[0] === yExtent[1]) { yExtent[0] -= 0.5; yExtent[1] += 0.5 }
   const yScale = d3
     .scaleLinear()
-    .domain(d3.extent(data.map((d) => isLdaData ? d.lda2 : d.rating)))
+    .domain(yExtent)
     .range([height - margin.top - margin.bottom, 0])
 
   const rScale = d3.scaleSqrt()

@@ -114,6 +114,12 @@ summary {
   display: none;
 }
 
+.rank_hint {
+  font-size: 0.75em;
+  color: #6b8499;
+  margin: 2px 0 10px 0;
+}
+
 input[type=text], select {
     width: 100%;
     padding: 12px 20px;
