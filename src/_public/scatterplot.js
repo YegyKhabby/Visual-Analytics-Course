@@ -9,7 +9,7 @@ export function draw_scatterplot(data) {
    */
   const margin = {
     top: 50,
-    bottom: 50,
+    bottom: 70,
     left: 50,
     right: 50,
   }
@@ -119,7 +119,7 @@ export function draw_scatterplot(data) {
     .attr("class", "x_label")
     .merge(x_label)
     .attr("x", width / 2)
-    .attr("y", height - margin.bottom / 4)
+    .attr("y", height - 15)
     .attr("text-anchor", "middle")
     .text((d) => d)
 
@@ -158,7 +158,7 @@ export function draw_scatterplot(data) {
     legendData.forEach((entry, i) => {
       const g = g_scatterplot.append("g")
         .attr("class", "legend_item")
-        .attr("transform", `translate(${width - margin.right + 5}, ${margin.top + 10 + i * 22})`)
+        .attr("transform", `translate(${width - margin.right - 70}, ${margin.top + 10 + i * 22})`)
 
       g.append("circle")
         .attr("r", 6)

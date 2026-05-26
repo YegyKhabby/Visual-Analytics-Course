@@ -71,15 +71,17 @@ summary {
 .visualizations {
   grid-area: visualizations;
   background: white;
+  height: 100%;
 
   display: grid;
   grid-template-columns: auto;
-  grid-template-rows: auto;
+  grid-template-rows: 100%;
   grid-template-areas: "scatterplot";
 }
 
 .scatterplot {
   grid-area: scatterplot;
+  height: 100%;
 }
 
 .button {

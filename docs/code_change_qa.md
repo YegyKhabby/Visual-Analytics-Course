@@ -1068,3 +1068,13 @@ let requestData = (parameters) => {
 ```
 
 If no boxes are checked, both arrays are empty `[]` and the server filter is skipped (no filtering applied).
+
+---
+
+**You:** The chart is getting cut off at the bottom — the x-axis and label are not visible. What needs to be fixed?
+
+**Assistant:** Two issues. First, the CSS height chain was broken: `.visualizations` and `.scatterplot` had no explicit `height: 100%`, so the SVG was inheriting height from the html/body (full viewport) instead of from its grid cell (viewport minus banner). Fix by adding `height: 100%` to both and setting `grid-template-rows: 100%` in `.visualizations`.
+
+Second, the legend was placed at `width - margin.right + 5` (just outside the right edge of the plot area) and the x-axis label was only 12px from the SVG bottom edge. Fix by moving the legend to `width - margin.right - 70` (inside the plot) and the label to `height - 15`.
+
+Also increased `margin.bottom` from 50 to 70 to give the x-axis and its label enough breathing room.
