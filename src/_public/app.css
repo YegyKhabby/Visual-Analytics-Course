@@ -36,6 +36,36 @@ head,
   background: #eef3f7;
   color: #1f2d36;
   padding: 20px;
+  overflow-y: auto;
+}
+
+#categories_list, #mechanics_list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #c6d3dd;
+  background: white;
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.checkbox-wrapper {
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-wrapper input {
+  margin-right: 8px;
+}
+
+details {
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+summary {
+  font-weight: bold;
+  color: #284b63;
 }
 
 .visualizations {

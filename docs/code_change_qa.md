@@ -873,3 +873,198 @@ How do I add a legend inside the SVG?
         .style("font-size", "12px")
     })
   }
+```
+
+---
+
+**You:** I want to add two collapsible filter panels to the sidepanel — one for Categories and one for Mechanics — so the user can check boxes to filter which games are shown. The sidepanel currently looks like this:
+
+```html
+<div class="sidepanel">
+  <button id="load_data_button" class="button">Load data</button>
+  <label for="rank_low">Top rank cutoff</label>
+  <input type="text" id="rank_low" value="25" name="rank_low" />
+  <label for="rank_high">Middle rank cutoff</label>
+  <input type="text" id="rank_high" value="75" name="rank_high" />
+  <button id="load_lda_button" class="button">Run LDA</button>
+</div>
+```
+
+How do I add collapsible panels with a search box and a scrollable checkbox list inside each?
+
+**Assistant:** Use the HTML `<details>` and `<summary>` elements — they are natively collapsible without any JavaScript. Put a text input for search and an empty `<div>` for the checkboxes (which will be filled dynamically by JavaScript) inside each one:
+
+```html
+<details id="categories_details">
+  <summary>Categories</summary>
+  <input type="text" id="categories_search" placeholder="Search categories..." />
+  <div id="categories_list"></div>
+</details>
+
+<details id="mechanics_details">
+  <summary>Mechanics</summary>
+  <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
+  <div id="mechanics_list"></div>
+</details>
+```
+
+Add these after the Run LDA button inside `.sidepanel`. The `<div>` containers are filled with checkboxes by the `setupCheckboxes` function in JavaScript.
+
+---
+
+**You:** My sidepanel has fixed height and the content overflows when I add the category and mechanics lists. Also the checkbox lists themselves need to scroll independently. My current CSS for sidepanel is:
+
+```css
+.sidepanel {
+  grid-area: sidepanel;
+  background: #eef3f7;
+  color: #1f2d36;
+  padding: 20px;
+}
+```
+
+What CSS do I need to add?
+
+**Assistant:** Add `overflow-y: auto` to `.sidepanel` so the whole panel scrolls, then give the two list containers a fixed `max-height` with their own scroll. Also style `details` and `summary` for spacing and appearance:
+
+```css
+.sidepanel {
+  grid-area: sidepanel;
+  background: #eef3f7;
+  color: #1f2d36;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#categories_list, #mechanics_list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #c6d3dd;
+  background: white;
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.checkbox-wrapper {
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-wrapper input {
+  margin-right: 8px;
+}
+
+details {
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+summary {
+  font-weight: bold;
+  color: #284b63;
+}
+```
+
+---
+
+**You:** My server's `websocket.js` only has a `getData` listener. I need to add a `getInitData` listener that reads the JSON file once on connect and emits the list of all unique category names and mechanic names back to the client. The data structure has `game.types.categories` and `game.types.mechanics`, each an array of objects with a `.name` property. How do I do that?
+
+**Assistant:** Add a new `socket.on("getInitData", ...)` listener before `getData`. Read the file, extract unique names using `flatMap` + `Set`, sort them, and emit them as `initData`:
+
+```js
+socket.on("getInitData", () => {
+  fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
+    if (error) { console.error(error); return }
+    const rawGames = JSON.parse(fileContent)
+    const categories = [...new Set(rawGames.flatMap(g => g.types.categories || []).map(c => c.name))].filter(Boolean).sort()
+    const mechanics  = [...new Set(rawGames.flatMap(g => g.types.mechanics  || []).map(m => m.name))].filter(Boolean).sort()
+    socket.emit("initData", { categories, mechanics })
+  })
+})
+```
+
+---
+
+**You:** In my `getData` listener I currently pass `rawGames` directly to `calculateLdaProjection` or `preprocess_boardgames`. I want to filter `rawGames` first based on `parameters.selectedCategories` and `parameters.selectedMechanics` arrays before running the analysis. How do I add that?
+
+**Assistant:** After parsing the JSON, filter `rawGames` in-place before calling either function. Check if the array is non-empty before filtering to avoid accidentally returning zero games when no filter is selected:
+
+```js
+let rawGames = JSON.parse(fileContent)
+
+if (parameters.selectedCategories && parameters.selectedCategories.length > 0) {
+  rawGames = rawGames.filter(game => {
+    const gameCats = (game.types.categories || []).map(c => c.name)
+    return parameters.selectedCategories.some(cat => gameCats.includes(cat))
+  })
+}
+
+if (parameters.selectedMechanics && parameters.selectedMechanics.length > 0) {
+  rawGames = rawGames.filter(game => {
+    const gameMechs = (game.types.mechanics || []).map(m => m.name)
+    return parameters.selectedMechanics.some(mech => gameMechs.includes(mech))
+  })
+}
+
+let games = []
+if (rawGames.length > 0) {
+  games = parameters.mode === "lda"
+    ? calculateLdaProjection(rawGames, parameters)
+    : preprocess_boardgames(rawGames)
+}
+```
+
+---
+
+**You:** My `index.js` handles the `freshData` event like this:
+
+```js
+let handleData = (payload) => {
+  data.scatterplot = payload.data
+  draw_scatterplot(data.scatterplot)
+}
+```
+
+I want the banner title to update automatically: show "LDA 1 vs LDA 2" after running LDA, and "Maximum Playtime vs Rating" for the raw scatterplot. The banner div has `id="title"`. How do I add that?
+
+**Assistant:** Check `payload.parameters.mode` inside `handleData` and set `textContent` on the title element:
+
+```js
+let handleData = (payload) => {
+  data.scatterplot = payload.data
+
+  if (payload.parameters && payload.parameters.mode === "lda") {
+    document.getElementById("title").textContent = "LDA 1 vs LDA 2"
+  } else {
+    document.getElementById("title").textContent = "Maximum Playtime vs Rating"
+  }
+
+  draw_scatterplot(data.scatterplot)
+}
+```
+
+Use `textContent` (not `innerHTML`) since the strings are static — no HTML parsing needed.
+
+---
+
+**You:** My `index.js` emits `getData` with just the user parameters. Now that I have category and mechanic checkboxes, I need to also send which ones are checked. The checkboxes have class `categories_list_checkbox` and `mechanics_list_checkbox`. How do I read the checked values and include them in the request?
+
+**Assistant:** Use `querySelectorAll` with the `:checked` pseudo-class to get the checked boxes, then map to their `.value`. Spread the existing parameters and add the two arrays:
+
+```js
+let requestData = (parameters) => {
+  const selectedCategories = Array.from(document.querySelectorAll(".categories_list_checkbox:checked")).map(cb => cb.value)
+  const selectedMechanics  = Array.from(document.querySelectorAll(".mechanics_list_checkbox:checked")).map(cb => cb.value)
+
+  socket.emit("getData", {
+    parameters: {
+      ...parameters,
+      selectedCategories,
+      selectedMechanics,
+    }
+  })
+}
+```
+
+If no boxes are checked, both arrays are empty `[]` and the server filter is skipped (no filtering applied).

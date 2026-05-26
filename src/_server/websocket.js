@@ -102,6 +102,19 @@ export function setupConnection(socket) {
    *      - Filtering: if the row has a value, that contradicts the filtering parameters, data row will be excluded
    *          (in this case: weight should not be larger than the max_weight filter-parameter)
    */
+  socket.on("getInitData", () => {
+    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+      const rawGames = JSON.parse(fileContent)
+      const categories = [...new Set(rawGames.flatMap(g => g.types.categories || []).map(c => c.name))].filter(Boolean).sort()
+      const mechanics = [...new Set(rawGames.flatMap(g => g.types.mechanics || []).map(m => m.name))].filter(Boolean).sort()
+      socket.emit("initData", { categories, mechanics })
+    })
+  })
+
   socket.on("getData", (obj) => {
     console.log(`Data request with properties ${JSON.stringify(obj)}...`)
 
@@ -113,11 +126,28 @@ export function setupConnection(socket) {
         return
       }
 
-      const rawGames = JSON.parse(fileContent)
-      const games =
-        parameters.mode === "lda"
+      let rawGames = JSON.parse(fileContent)
+
+      if (parameters.selectedCategories && parameters.selectedCategories.length > 0) {
+        rawGames = rawGames.filter(game => {
+          const gameCats = (game.types.categories || []).map(c => c.name)
+          return parameters.selectedCategories.some(cat => gameCats.includes(cat))
+        })
+      }
+
+      if (parameters.selectedMechanics && parameters.selectedMechanics.length > 0) {
+        rawGames = rawGames.filter(game => {
+          const gameMechs = (game.types.mechanics || []).map(m => m.name)
+          return parameters.selectedMechanics.some(mech => gameMechs.includes(mech))
+        })
+      }
+
+      let games = []
+      if (rawGames.length > 0) {
+        games = parameters.mode === "lda"
           ? calculateLdaProjection(rawGames, parameters)
           : preprocess_boardgames(rawGames)
+      }
 
       socket.emit("freshData", {
         timestamp: new Date().getTime(),
