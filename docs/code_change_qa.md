@@ -1078,3 +1078,50 @@ If no boxes are checked, both arrays are empty `[]` and the server filter is ski
 Second, the legend was placed at `width - margin.right + 5` (just outside the right edge of the plot area) and the x-axis label was only 12px from the SVG bottom edge. Fix by moving the legend to `width - margin.right - 70` (inside the plot) and the label to `height - 15`.
 
 Also increased `margin.bottom` from 50 to 70 to give the x-axis and its label enough breathing room.
+
+---
+
+**You:** When I select a category that matches only one game, the dot disappears. And if I then uncheck everything and click Load data, nothing shows up either. What is going wrong?
+
+**Assistant:** Two issues. First, when only one game matches, `d3.extent` returns the same value for min and max (e.g. `[8.5, 8.5]`). A linear scale with identical domain endpoints produces `NaN` for any input, so the circle gets a `NaN` y-position and SVG does not render it.
+
+Fix: check if the extent min equals max and pad by 0.5 in each direction so the scale is always valid:
+
+```js
+const yExtent = d3.extent(data.map((d) => isLdaData ? d.lda2 : d.rating))
+if (yExtent[0] === yExtent[1]) { yExtent[0] -= 0.5; yExtent[1] += 0.5 }
+```
+
+Second, when the filter returns zero games, the function should exit early and clear any existing circles rather than trying to draw an empty chart:
+
+```js
+if (data.length === 0) {
+  g_scatterplot.selectAll(".scatterplot_circle").remove()
+  g_scatterplot.selectAll(".x_label").remove()
+  g_scatterplot.selectAll(".y_label").remove()
+  g_scatterplot.selectAll(".legend_item").remove()
+  return
+}
+```
+
+---
+
+**You:** The labels "Top rank cutoff" and "Middle rank cutoff" are confusing. Someone reading them for the first time does not know what a cutoff means or that there are three groups. How should we label them?
+
+**Assistant:** Rename the labels to describe what each input actually controls, and add a short hint explaining the third group:
+
+```html
+<label for="rank_low">Top group — games ranked 1 to:</label>
+<label for="rank_high">Middle group — games ranked up to:</label>
+<p class="rank_hint">Everything beyond = Lower group</p>
+```
+
+Add a small CSS rule for the hint so it is visually secondary:
+
+```css
+.rank_hint {
+  font-size: 0.75em;
+  color: #6b8499;
+  margin: 2px 0 10px 0;
+}
+```
