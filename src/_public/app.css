@@ -58,6 +58,15 @@ head,
   margin-right: 8px;
 }
 
+.panel-header {
+  margin: 0 0 10px 0;
+  font-size: 0.95em;
+  font-weight: bold;
+  color: #284b63;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 details {
   margin-top: 15px;
   cursor: pointer;
@@ -239,11 +248,23 @@ input[type=text], select {
   margin-bottom: 8px;
 }
 
-.year-custom-row input[type=text] {
-  width: calc(50% - 4px);
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 5px 8px;
+.year-custom-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.year-col-label {
+  font-size: 0.78em;
+  color: #555;
+  margin-bottom: 2px;
+  display: block;
+  text-align: center;
+}
+
+.year-custom-col input[type=text] {
+  width: 100%;
+  padding: 4px 6px;
   margin: 0;
   text-align: center;
   font-size: 0.88em;
@@ -273,9 +294,20 @@ input[type=text], select {
 
 .rank-cutoff-col input[type=text] {
   width: 100%;
-  padding: 6px 8px;
+  padding: 4px 6px;
   margin: 0;
   text-align: center;
   font-size: 0.9em;
   box-sizing: border-box;
+}
+
+.rank-lower-col {
+  justify-content: center;
+  align-items: center;
+}
+
+.rank-lower-hint {
+  font-size: 0.85em;
+  color: #c0392b;
+  text-align: center;
 }

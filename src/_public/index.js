@@ -101,6 +101,7 @@ const rankHighRange = document.getElementById("rank_high_range")
 const rankLowInput = document.getElementById("rank_low")
 const rankHighInput = document.getElementById("rank_high")
 const rankTrack = document.getElementById("rank_track")
+const rankTopLabel = document.getElementById("rank_top_label")
 const rankHighLabel = document.getElementById("rank_high_label")
 const rankLowerHint = document.getElementById("rank_lower_hint")
 
@@ -110,8 +111,9 @@ function updateRankTrackOnly(lo, hi) {
   const loPercent = ((lo - RANK_MIN) / total) * 100
   const hiPercent = ((hi - RANK_MIN) / total) * 100
   rankTrack.style.background = `linear-gradient(to right, #2f80ed 0%, #2f80ed ${loPercent}%, #f2a93b ${loPercent}%, #f2a93b ${hiPercent}%, #c0392b ${hiPercent}%, #c0392b 100%)`
-  rankHighLabel.textContent = `Mid: ${lo} to ${hi}`
-  rankLowerHint.textContent = `Lower: ranked beyond ${hi}`
+  rankTopLabel.textContent = `Top: 1–${lo}`
+  rankHighLabel.textContent = `Mid: ${lo + 1}–${hi}`
+  rankLowerHint.textContent = `${hi + 1}–100`
   rankLowRange.style.zIndex = lo > RANK_MAX - 10 ? 3 : 2
   rankHighRange.style.zIndex = lo > RANK_MAX - 10 ? 2 : 3
 }

@@ -11,7 +11,7 @@ export function draw_scatterplot(data) {
     top: 50,
     bottom: 70,
     left: 50,
-    right: 50,
+    right: 160,
   }
 
   /**
@@ -87,7 +87,19 @@ export function draw_scatterplot(data) {
     .attr("cx", (d) => margin.left + xScale(isLdaData ? d.lda1 : d.maxplaytime))
     .attr("cy", (d) => yScale(isLdaData ? d.lda2 : d.rating) + margin.top)
     .on("mouseover", (event, d) => {
-      tooltip.style("display", "block").text(d.title)
+      const lines = isLdaData
+        ? [
+            `<strong>${d.title}</strong>`,
+            `LDA 1: ${d.lda1.toFixed(3)}`,
+            `LDA 2: ${d.lda2.toFixed(3)}`,
+          ]
+        : [
+            `<strong>${d.title}</strong>`,
+            `Rating: ${d.rating.toFixed(2)}`,
+            `Max playtime: ${d.maxplaytime} min`,
+            `Reviews: ${d.num_of_reviews.toLocaleString()}`,
+          ]
+      tooltip.style("display", "block").html(lines.join("<br/>"))
     })
     .on("mousemove", (event) => {
       tooltip
@@ -174,22 +186,22 @@ export function draw_scatterplot(data) {
       { label: `${reviewExtent[1]} reviews`, r: rScale(reviewExtent[1]) },
     ]
 
-    const legendX = width - margin.right - 80
-    let legendY = margin.top + 10
+    const legendX = width - margin.right + 16
+    let rowY = margin.top + 10
 
     g_scatterplot.append("text")
       .attr("class", "legend_item")
       .attr("x", legendX)
-      .attr("y", legendY)
+      .attr("y", rowY)
       .style("font-size", "11px")
       .style("font-weight", "bold")
-      .text("Circle size = # reviews")
+      .text("# reviews")
 
-    legendY += 18
+    rowY += 18
     sizeLegendData.forEach((entry) => {
       const g = g_scatterplot.append("g")
         .attr("class", "legend_item")
-        .attr("transform", `translate(${legendX + entry.r}, ${legendY + entry.r})`)
+        .attr("transform", `translate(${legendX + entry.r}, ${rowY + entry.r})`)
 
       g.append("circle")
         .attr("r", entry.r)
@@ -202,7 +214,7 @@ export function draw_scatterplot(data) {
         .style("font-size", "10px")
         .text(entry.label)
 
-      legendY += entry.r * 2 + 8
+      rowY += entry.r * 2 + 8
     })
   }
 
@@ -213,17 +225,20 @@ export function draw_scatterplot(data) {
       { label: "Lower", color: groupColor.lower },
     ]
 
+    const legendX = width - margin.right + 16
+    const legendY = margin.top + 10
+
     legendData.forEach((entry, i) => {
       const g = g_scatterplot.append("g")
         .attr("class", "legend_item")
-        .attr("transform", `translate(${width - margin.right - 70}, ${margin.top + 10 + i * 22})`)
+        .attr("transform", `translate(${legendX}, ${legendY + i * 22})`)
 
       g.append("circle")
         .attr("r", 6)
         .attr("fill", entry.color)
 
       g.append("text")
-        .attr("x", 12)
+        .attr("x", 16)
         .attr("y", 5)
         .text(entry.label)
         .style("font-size", "12px")

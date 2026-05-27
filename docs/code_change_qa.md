@@ -1388,4 +1388,222 @@ On the server side in `websocket.js`, filter `rawGames` by year before passing t
 rawGames = rawGames.filter(game => game.year >= yearMin && game.year <= yearMax)
 ```
 
+---
+
+**You:** The year dual-handle slider is functional but the UX is awkward — the oldest game is from 1876, so the slider spans 145 years but 98 out of 100 games fall in the last 20 years. Most of the thumb travel does nothing useful. Is there a better UI pattern for filtering year here?
+
+**Professor:** For skewed data like this, discrete preset buttons are almost always better than a continuous range slider. Instead of asking the user to drag handles to the right position, you offer the most common choices (All, 2000+, 2010+) and a Custom fallback that reveals two text inputs only when needed. This is the same pattern used in e-commerce filters (price ranges, date ranges). The HTML is straightforward:
+
+```html
+<div class="year-presets">
+  <button class="year-preset-btn" data-min="all">All</button>
+  <button class="year-preset-btn" data-min="2000">2000+</button>
+  <button class="year-preset-btn" data-min="2010">2010+</button>
+  <button class="year-preset-btn" data-min="custom">Custom</button>
+</div>
+<div class="year-custom-row" id="year_custom_row" style="display:none">
+  <input type="text" id="year_min_input" placeholder="from" />
+  <input type="text" id="year_max_input" placeholder="to" />
+</div>
+```
+
+Each button carries a `data-min` attribute. An `activatePreset` function marks the active button and either hides the custom row (setting the hidden inputs automatically) or shows it:
+
+```js
+function activatePreset(btn) {
+  yearPresetBtns.forEach(b => b.classList.remove("active"))
+  btn.classList.add("active")
+  if (btn.dataset.min === "custom") {
+    yearCustomRow.style.display = "flex"
+  } else {
+    yearCustomRow.style.display = "none"
+    yearMinInput.value = btn.dataset.min === "all" ? YEAR_MIN : parseInt(btn.dataset.min)
+    yearMaxInput.value = YEAR_MAX
+  }
+}
+```
+
+`requestData` still reads `year_min_input` and `year_max_input` — nothing changes on the server side. When the server sends `initData` with the actual `yearMin`/`yearMax` from the data, the active preset re-runs so the "All" button picks up the real range dynamically.
+
+---
+
+**You:** After the Mechanics collapsible section, the "Year range:" label appears immediately below it with no visual gap. It looks like Year range is part of the Mechanics section. How can I fix that?
+
+**Professor:** The `<details>` elements already have `margin-top: 15px` from the existing CSS rule. The `<label>` that follows them has no top margin by default, so it sits flush. The quickest fix is to add `display:block; margin-top:15px` directly on that label so it matches the same rhythm as the other sections:
+
+```html
+<label style="display:block; margin-top:15px">Year range:</label>
+```
+
+`display:block` is needed because `<label>` is inline by default, and inline elements do not respect top margin in all browsers. This one-line change gives the Year range section the same visual breathing room as any `<details>` section above it.
+
+---
+
+**You:** The sidepanel has two distinct areas — one for filtering the data (Categories, Mechanics, Year) and one for configuring the LDA (rank cutoffs). Should I add section headers to make this clearer to the user?
+
+**Professor:** Yes, labeling distinct control groups is good information architecture. Use an `<h3>` for each section so screen readers and visual hierarchy both benefit. A small `.panel-header` class gives them a consistent style that matches the existing color scheme without competing with the main banner:
+
+```css
+.panel-header {
+  margin: 0 0 10px 0;
+  font-size: 0.95em;
+  font-weight: bold;
+  color: #284b63;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+```
+
+In `template.html`, place `<h3 class="panel-header">Data Filters</h3>` at the top of the sidepanel before the Categories section, and `<h3 class="panel-header">LDA Settings</h3>` right after the `<hr class="section_divider" />` that already separates the two areas.
+
+---
+
+**You:** The rank cutoff text inputs look a bit tall and the custom year inputs have no labels — they only show placeholder text. How can I make the inputs more compact and add Min/Max labels to the year fields?
+
+**Professor:** For the rank inputs, reducing the vertical padding from `6px` to `4px` is enough to make them feel more compact without losing usability. For the year custom fields, wrap each input in a small column div (like the rank cutoff columns already use) and add a `<span>` label above each one:
+
+```html
+<div class="year-custom-row" id="year_custom_row" style="display:none">
+  <div class="year-custom-col">
+    <span class="year-col-label">Min</span>
+    <input type="text" id="year_min_input" value="1876" />
+  </div>
+  <div class="year-custom-col">
+    <span class="year-col-label">Max</span>
+    <input type="text" id="year_max_input" value="2021" />
+  </div>
+</div>
+```
+
+Add matching CSS for the new column and label:
+
+```css
+.year-custom-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.year-col-label {
+  font-size: 0.78em;
+  color: #555;
+  margin-bottom: 2px;
+  display: block;
+  text-align: center;
+}
+
+.year-custom-col input[type=text] {
+  width: 100%;
+  padding: 4px 6px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.88em;
+  box-sizing: border-box;
+}
+```
+
+This mirrors the exact same pattern used by `.rank-cutoff-col`, so both sections are visually consistent.
+
+---
+
+**You:** The "Lower: ranked beyond X" label sits on its own line below the two rank inputs, which wastes space. Can I put it inline with the Top and Mid columns so all three groups appear on one row?
+
+**Professor:** Yes — add it as a third column in the same `.rank-cutoff-row` flex container. Since the Lower group has no editable input (it just runs to infinity), the third column only needs a label and a value span:
+
+```html
+<div class="rank-cutoff-row">
+  <div class="rank-cutoff-col">
+    <span class="rank-col-label">Top ends at:</span>
+    <input type="text" id="rank_low" value="25" />
+  </div>
+  <div class="rank-cutoff-col">
+    <span id="rank_high_label" class="rank-col-label">Mid: 25 to 75</span>
+    <input type="text" id="rank_high" value="75" />
+  </div>
+  <div class="rank-cutoff-col rank-lower-col">
+    <span class="rank-col-label">Lower:</span>
+    <span id="rank_lower_hint" class="rank-lower-hint">beyond 75</span>
+  </div>
+</div>
+```
+
+The third column gets `justify-content: center; align-items: center` so the two spans stack neatly, and the value span uses the red color (`#c0392b`) to visually match the red slider thumb. In `index.js`, change the `rank_lower_hint` update to set only `beyond ${hi}` since "Lower:" is now a static label in the HTML.
+
+---
+
+**You:** The label "Top ends at: 25" is ambiguous — it is not clear whether rank 25 belongs to the Top group or the Mid group. The server uses `game.rank <= rankLow`, so rank 25 is in Top. How should I label the three columns to make the boundaries explicit?
+
+**Professor:** Show the full inclusive range for each group. Give the Top label an `id` so JavaScript can update it dynamically alongside the other two labels:
+
+```html
+<span id="rank_top_label" class="rank-col-label">Top: 1–25</span>
+<span id="rank_high_label" class="rank-col-label">Mid: 26–75</span>
+<span id="rank_lower_hint" class="rank-lower-hint">76+</span>
+```
+
+In `updateRankTrackOnly`, update all three at once:
+
+```js
+rankTopLabel.textContent  = `Top: 1–${lo}`
+rankHighLabel.textContent = `Mid: ${lo + 1}–${hi}`
+rankLowerHint.textContent = `${hi + 1}+`
+```
+
+Using `lo + 1` and `hi + 1` makes the boundaries unambiguous — each rank number appears in exactly one group label.
+
+---
+
+**You:** The legend in the top-right corner of the scatterplot sometimes overlaps with data points, making both hard to read. What is the standard way to handle this in D3?
+
+**Professor:** The common solution is to draw a semi-transparent white rectangle behind the legend items before appending them. Because SVG renders elements in document order, the rect goes first, then the legend content on top. This way any data point underneath is visually pushed back without moving the legend:
+
+```js
+g_scatterplot.append("rect")
+  .attr("class", "legend_item")
+  .attr("x", legendX - 8)
+  .attr("y", legendY - 14)
+  .attr("width", 85)
+  .attr("height", legendData.length * 22 + 6)
+  .attr("rx", 4)
+  .attr("fill", "white")
+  .attr("fill-opacity", 0.85)
+  .attr("stroke", "#c6d3dd")
+  .attr("stroke-width", 1)
+```
+
+The rect gets the same `"legend_item"` class so the existing `g_scatterplot.selectAll(".legend_item").remove()` cleanup at the top already removes it on each redraw. Apply the same pattern for the size legend in the normal scatterplot view.
+
+---
+
+**You:** Even with a background rectangle, a data point can still appear on top of the legend if D3 renders it after the legend. Is there a way to place the legend so it can never overlap with data points at all?
+
+**Professor:** Yes — reserve space in the margin. Instead of floating the legend inside the plot area, increase `margin.right` to 160 and position the legend at `x = width - margin.right + 16`. That puts it in a strip to the right of where the axes end, completely outside the data coordinate space. No data point can ever be drawn there, so no background rect is needed and there is no z-order issue. The trade-off is a narrower plotting area, which is acceptable given the wide screen layout.
+
+---
+
+**You:** The tooltip currently only shows the game title on hover. How can I display the actual data values too?
+
+**Professor:** Switch from `.text()` to `.html()` and build an array of lines joined with `<br/>`. This lets you bold the title and list the relevant fields underneath. Use a ternary on `isLdaData` to show different fields for each view:
+
+```js
+.on("mouseover", (event, d) => {
+  const lines = isLdaData
+    ? [
+        `<strong>${d.title}</strong>`,
+        `Group: ${d.group}`,
+        `LDA 1: ${d.lda1.toFixed(3)}`,
+        `LDA 2: ${d.lda2.toFixed(3)}`,
+      ]
+    : [
+        `<strong>${d.title}</strong>`,
+        `Rating: ${d.rating.toFixed(2)}`,
+        `Max playtime: ${d.maxplaytime} min`,
+        `Reviews: ${d.num_of_reviews.toLocaleString()}`,
+      ]
+  tooltip.style("display", "block").html(lines.join("<br/>"))
+})
+```
+
+`.toFixed(2)` keeps the rating to two decimal places, `.toLocaleString()` adds thousands separators to the review count, and `.toFixed(3)` gives enough precision for the LDA coordinates.
+
 This runs after the category and mechanics filters, so all three filters stack together.
