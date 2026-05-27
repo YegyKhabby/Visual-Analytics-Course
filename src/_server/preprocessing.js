@@ -51,6 +51,7 @@ export function preprocess_boardgames(games) {
       title: game.title,
       maxplaytime: game.maxplaytime,
       rating: game.rating.rating,
+      num_of_reviews: game.rating.num_of_reviews,
     }
   })
 }

@@ -21,7 +21,8 @@ head,
 
 .banner {
   grid-area: banner;
-  background: rgb(120, 150, 196);
+  background: #284b63;
+  color: white;
 
   text-align: center;
   line-height: 100px;
@@ -32,22 +33,70 @@ head,
 
 .sidepanel {
   grid-area: sidepanel;
-  background: rgb(202, 202, 202);
+  background: #eef3f7;
+  color: #1f2d36;
   padding: 20px;
+  overflow-y: auto;
+}
+
+#categories_list, #mechanics_list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #c6d3dd;
+  background: white;
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.checkbox-wrapper {
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-wrapper input {
+  margin-right: 8px;
+}
+
+.panel-header {
+  margin: 0 0 10px 0;
+  font-size: 0.95em;
+  font-weight: bold;
+  color: #284b63;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+details {
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+.section_divider {
+  border: none;
+  border-top: 1px solid #c6d3dd;
+  margin: 15px 0;
+}
+
+summary {
+  font-weight: bold;
+  color: #284b63;
 }
 
 .visualizations {
   grid-area: visualizations;
   background: white;
+  height: 100%;
 
   display: grid;
   grid-template-columns: auto;
-  grid-template-rows: auto;
+  grid-template-rows: 100%;
   grid-template-areas: "scatterplot";
 }
 
 .scatterplot {
   grid-area: scatterplot;
+  height: 100%;
 }
 
 .button {
@@ -58,20 +107,207 @@ head,
     height: 50px;
     font-size: 1.2em;
     font-weight: bold;
+    background: white;
+    border: 2px solid #284b63;
+    color: #1f2d36;
 
     cursor: pointer;
 }
 
 .button:hover {
-    background: rgb(180, 180, 180);
+    border-color: #f2a93b;
 }
+
+#tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid #c6d3dd;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.85em;
+  pointer-events: none;
+  display: none;
+}
+
 
 input[type=text], select {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
     display: inline-block;
-    border: 1px solid #ccc;
+    border: 1px solid #c6d3dd;
     border-radius: 4px;
     box-sizing: border-box;
   }
+
+/* dual-handle range slider */
+.dual-range-wrapper {
+  position: relative;
+  height: 30px;
+  margin: 4px 0;
+}
+
+.dual-range-track {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 3px;
+  pointer-events: none;
+  background: #c6d3dd;
+}
+
+.dual-range-wrapper input[type=range] {
+  position: absolute;
+  width: 100%;
+  height: 30px;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+}
+
+.dual-range-wrapper input[type=range]::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 0;
+}
+
+.dual-range-wrapper input[type=range]::-moz-range-track {
+  background: transparent;
+  height: 0;
+  border: none;
+}
+
+.dual-range-wrapper input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.dual-range-wrapper input[type=range]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid white;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* rank slider thumb colors */
+#rank_low_range::-webkit-slider-thumb  { background: #2f80ed; }
+#rank_low_range::-moz-range-thumb      { background: #2f80ed; }
+#rank_high_range::-webkit-slider-thumb { background: #c0392b; }
+#rank_high_range::-moz-range-thumb     { background: #c0392b; }
+
+/* year preset buttons */
+.year-presets {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 8px 0;
+}
+
+.year-preset-btn {
+  flex: 1;
+  padding: 6px 0;
+  border: 1px solid #c6d3dd;
+  border-radius: 4px;
+  background: white;
+  color: #1f2d36;
+  font-size: 0.82em;
+  cursor: pointer;
+}
+
+.year-preset-btn:hover {
+  border-color: #f2a93b;
+}
+
+.year-preset-btn.active {
+  background: #284b63;
+  color: white;
+  border-color: #284b63;
+}
+
+/* custom year text inputs — shown only when Custom is active */
+.year-custom-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.year-custom-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.year-col-label {
+  font-size: 0.78em;
+  color: #555;
+  margin-bottom: 2px;
+  display: block;
+  text-align: center;
+}
+
+.year-custom-col input[type=text] {
+  width: 100%;
+  padding: 4px 6px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.88em;
+  box-sizing: border-box;
+}
+
+/* compact two-column layout for rank cutoff inputs */
+.rank-cutoff-row {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 4px 0;
+}
+
+.rank-cutoff-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-col-label {
+  font-size: 0.78em;
+  color: #555;
+  margin-bottom: 2px;
+  display: block;
+  text-align: center;
+}
+
+.rank-cutoff-col input[type=text] {
+  width: 100%;
+  padding: 4px 6px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.9em;
+  box-sizing: border-box;
+}
+
+.rank-lower-col {
+  justify-content: center;
+  align-items: center;
+}
+
+.rank-lower-hint {
+  font-size: 0.85em;
+  color: #c0392b;
+  text-align: center;
+}

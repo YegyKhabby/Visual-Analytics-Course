@@ -11,20 +11,177 @@ const socketUrl = protocol + "//" + hostname + ":" + configs.port
 export const socket = io(socketUrl)
 socket.on("connect", () => {
   console.log("Connected to " + socketUrl + ".")
+  socket.emit("getInitData")
 })
 socket.on("disconnect", () => {
   console.log("Disconnected from " + socketUrl + ".")
 })
+
+// fill categories and mechanics checkboxes on first connect
+socket.on("initData", (payload) => {
+  const setupCheckboxes = (items, listElementId) => {
+    const listEl = document.getElementById(listElementId)
+    while (listEl.firstChild) listEl.removeChild(listEl.firstChild)
+
+    items.forEach(item => {
+      const wrapper = document.createElement("div")
+      wrapper.className = "checkbox-wrapper"
+
+      const checkbox = document.createElement("input")
+      checkbox.type = "checkbox"
+      checkbox.id = `${listElementId}_${item}`
+      checkbox.value = item
+      checkbox.className = `${listElementId}_checkbox`
+
+      const label = document.createElement("label")
+      label.htmlFor = checkbox.id
+      label.textContent = item
+
+      wrapper.appendChild(checkbox)
+      wrapper.appendChild(label)
+      listEl.appendChild(wrapper)
+    })
+  }
+
+  setupCheckboxes(payload.categories, "categories_list")
+  setupCheckboxes(payload.mechanics, "mechanics_list")
+
+  if (payload.yearMin !== undefined) {
+    YEAR_MIN = payload.yearMin
+    YEAR_MAX = payload.yearMax
+    // re-apply the active preset now that we know the real data range
+    const activeBtn = document.querySelector(".year-preset-btn.active")
+    if (activeBtn) activatePreset(activeBtn)
+  }
+})
+
+// hide checkboxes that don't match the search input
+const setupSearch = (searchInputId, listElementId) => {
+  document.getElementById(searchInputId).addEventListener("input", (e) => {
+    const searchTerm = e.target.value.toLowerCase()
+    const listEl = document.getElementById(listElementId)
+    Array.from(listEl.getElementsByClassName("checkbox-wrapper")).forEach(wrapper => {
+      wrapper.style.display = wrapper.textContent.toLowerCase().includes(searchTerm) ? "" : "none"
+    })
+  })
+}
+
+setupSearch("categories_search", "categories_list")
+setupSearch("mechanics_search", "mechanics_list")
+
+// year range filter — preset buttons
+let YEAR_MIN = 1876, YEAR_MAX = 2021
+const yearMinInput = document.getElementById("year_min_input")
+const yearMaxInput = document.getElementById("year_max_input")
+const yearCustomRow = document.getElementById("year_custom_row")
+const yearPresetBtns = document.querySelectorAll(".year-preset-btn")
+
+function activatePreset(btn) {
+  yearPresetBtns.forEach(b => b.classList.remove("active"))
+  btn.classList.add("active")
+
+  if (btn.dataset.min === "custom") {
+    yearCustomRow.style.display = "flex"
+  } else {
+    yearCustomRow.style.display = "none"
+    yearMinInput.value = btn.dataset.min === "all" ? YEAR_MIN : parseInt(btn.dataset.min)
+    yearMaxInput.value = YEAR_MAX
+  }
+}
+
+yearPresetBtns.forEach(btn => btn.addEventListener("click", () => activatePreset(btn)))
+
+// default: All
+activatePreset(yearPresetBtns[0])
+
+// rank range slider
+const RANK_MIN = 1, RANK_MAX = 99
+const rankLowRange = document.getElementById("rank_low_range")
+const rankHighRange = document.getElementById("rank_high_range")
+const rankLowInput = document.getElementById("rank_low")
+const rankHighInput = document.getElementById("rank_high")
+const rankTrack = document.getElementById("rank_track")
+const rankTopLabel = document.getElementById("rank_top_label")
+const rankHighLabel = document.getElementById("rank_high_label")
+const rankLowerHint = document.getElementById("rank_lower_hint")
+
+// updates track gradient, labels, z-index — does NOT touch the text inputs
+function updateRankTrackOnly(lo, hi) {
+  const total = RANK_MAX - RANK_MIN
+  const loPercent = ((lo - RANK_MIN) / total) * 100
+  const hiPercent = ((hi - RANK_MIN) / total) * 100
+  rankTrack.style.background = `linear-gradient(to right, #2f80ed 0%, #2f80ed ${loPercent}%, #f2a93b ${loPercent}%, #f2a93b ${hiPercent}%, #c0392b ${hiPercent}%, #c0392b 100%)`
+  rankTopLabel.textContent = `Top: 1–${lo}`
+  rankHighLabel.textContent = `Mid: ${lo + 1}–${hi}`
+  rankLowerHint.textContent = `${hi + 1}–100`
+  rankLowRange.style.zIndex = lo > RANK_MAX - 10 ? 3 : 2
+  rankHighRange.style.zIndex = lo > RANK_MAX - 10 ? 2 : 3
+}
+
+// called from slider drag — also syncs text inputs
+function updateRankSlider() {
+  const lo = parseInt(rankLowRange.value)
+  const hi = parseInt(rankHighRange.value)
+  rankLowInput.value = lo
+  rankHighInput.value = hi
+  updateRankTrackOnly(lo, hi)
+}
+
+rankLowRange.addEventListener("input", () => {
+  if (parseInt(rankLowRange.value) >= parseInt(rankHighRange.value)) {
+    rankLowRange.value = parseInt(rankHighRange.value) - 1
+  }
+  updateRankSlider()
+})
+
+rankHighRange.addEventListener("input", () => {
+  if (parseInt(rankHighRange.value) <= parseInt(rankLowRange.value)) {
+    rankHighRange.value = parseInt(rankLowRange.value) + 1
+  }
+  updateRankSlider()
+})
+
+// when user types — only move the slider, never overwrite the field being typed in
+rankLowInput.addEventListener("input", () => {
+  let v = parseInt(rankLowInput.value)
+  if (!isNaN(v)) {
+    v = Math.max(RANK_MIN, Math.min(v, parseInt(rankHighInput.value) - 1))
+    rankLowRange.value = v
+    updateRankTrackOnly(v, parseInt(rankHighRange.value))
+  }
+})
+
+rankHighInput.addEventListener("input", () => {
+  let v = parseInt(rankHighInput.value)
+  if (!isNaN(v)) {
+    v = Math.min(RANK_MAX, Math.max(v, parseInt(rankLowInput.value) + 1))
+    rankHighRange.value = v
+    updateRankTrackOnly(parseInt(rankLowRange.value), v)
+  }
+})
+
+updateRankSlider()
 
 /**
  * Callback, when the button is pressed to request the data from the server.
  * @param {*} parameters
  */
 let requestData = (parameters) => {
-  console.log(`requesting data from webserver (every 2sec)`)
+  console.log(`requesting data from webserver`)
+
+  const selectedCategories = Array.from(document.querySelectorAll(".categories_list_checkbox:checked")).map(cb => cb.value)
+  const selectedMechanics = Array.from(document.querySelectorAll(".mechanics_list_checkbox:checked")).map(cb => cb.value)
+  const yearMin = document.getElementById("year_min_input").value
+  const yearMax = document.getElementById("year_max_input").value
 
   socket.emit("getData", {
-    parameters,
+    parameters: {
+      ...parameters,
+      selectedCategories,
+      selectedMechanics,
+      yearMin,
+      yearMax,
+    }
   })
 }
 
@@ -56,6 +213,13 @@ let handleData = (payload) => {
   console.log(`Fresh data from Webserver:`)
   console.log(payload)
   data.scatterplot = payload.data
+
+  if (payload.parameters && payload.parameters.mode === "lda") {
+    document.getElementById("title").textContent = "LDA 1 vs LDA 2"
+  } else {
+    document.getElementById("title").textContent = "Playtime vs Rating (sized by Reviews)"
+  }
+
   draw_scatterplot(data.scatterplot)
 }
 

@@ -31,7 +31,7 @@ function calculateLdaProjection(rawGames, parameters) {
     }
   })
 
-  const featureNames = ["rating", "reviews", "year", "minage", "minplayers", "maxplayers", "minplaytime", "maxplaytime"]
+  const featureNames = ["year", "minage", "minplayers", "maxplayers", "minplaytime", "maxplaytime"]
   const ranges = {}
 
   for (const feature of featureNames) {
@@ -102,6 +102,21 @@ export function setupConnection(socket) {
    *      - Filtering: if the row has a value, that contradicts the filtering parameters, data row will be excluded
    *          (in this case: weight should not be larger than the max_weight filter-parameter)
    */
+  socket.on("getInitData", () => {
+    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
+      if (error) {
+        console.error(error)
+        return
+      }
+      const rawGames = JSON.parse(fileContent)
+      const categories = [...new Set(rawGames.flatMap(g => g.types.categories || []).map(c => c.name))].filter(Boolean).sort()
+      const mechanics = [...new Set(rawGames.flatMap(g => g.types.mechanics || []).map(m => m.name))].filter(Boolean).sort()
+      const yearMin = Math.min(...rawGames.map(g => g.year))
+      const yearMax = Math.max(...rawGames.map(g => g.year))
+      socket.emit("initData", { categories, mechanics, yearMin, yearMax })
+    })
+  })
+
   socket.on("getData", (obj) => {
     console.log(`Data request with properties ${JSON.stringify(obj)}...`)
 
@@ -113,11 +128,41 @@ export function setupConnection(socket) {
         return
       }
 
-      const rawGames = JSON.parse(fileContent)
-      const games =
-        parameters.mode === "lda"
-          ? calculateLdaProjection(rawGames, parameters)
-          : preprocess_boardgames(rawGames)
+      let rawGames = JSON.parse(fileContent)
+
+      if (parameters.selectedCategories && parameters.selectedCategories.length > 0) {
+        rawGames = rawGames.filter(game => {
+          const gameCats = (game.types.categories || []).map(c => c.name)
+          return parameters.selectedCategories.some(cat => gameCats.includes(cat))
+        })
+      }
+
+      if (parameters.selectedMechanics && parameters.selectedMechanics.length > 0) {
+        rawGames = rawGames.filter(game => {
+          const gameMechs = (game.types.mechanics || []).map(m => m.name)
+          return parameters.selectedMechanics.some(mech => gameMechs.includes(mech))
+        })
+      }
+
+      if (parameters.yearMin !== undefined && parameters.yearMax !== undefined) {
+        const yearMin = parseInt(parameters.yearMin)
+        const yearMax = parseInt(parameters.yearMax)
+        rawGames = rawGames.filter(game => game.year >= yearMin && game.year <= yearMax)
+      }
+
+      let games = []
+      if (rawGames.length > 0) {
+        if (parameters.mode === "lda") {
+          try {
+            games = calculateLdaProjection(rawGames, parameters)
+          } catch (e) {
+            console.error("LDA failed:", e.message)
+            games = []
+          }
+        } else {
+          games = preprocess_boardgames(rawGames)
+        }
+      }
 
       socket.emit("freshData", {
         timestamp: new Date().getTime(),

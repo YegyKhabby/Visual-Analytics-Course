@@ -3,28 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visualization Dashboard</title>
+    <title>Board Game Analytics</title>
   </head>
   <body>
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <div class="root" id="root">
-      <div class="banner">Visualization Dashboard</div>
+      <div class="banner" id="title">Board Game Analytics</div>
       <div class="sidepanel">
+        <h3 class="panel-header">Data Filters</h3>
+        <details id="categories_details">
+          <summary>Categories</summary>
+          <input type="text" id="categories_search" placeholder="Search categories..." />
+          <div id="categories_list"></div>
+        </details>
+
+        <details id="mechanics_details">
+          <summary>Mechanics</summary>
+          <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
+          <div id="mechanics_list"></div>
+        </details>
+
+        <label style="display:block; margin-top:15px">Year range:</label>
+        <div class="year-presets">
+          <button class="year-preset-btn" data-min="all">All</button>
+          <button class="year-preset-btn" data-min="2000">2000+</button>
+          <button class="year-preset-btn" data-min="2010">2010+</button>
+          <button class="year-preset-btn" data-min="custom">Custom</button>
+        </div>
+        <div class="year-custom-row" id="year_custom_row" style="display:none">
+          <div class="year-custom-col">
+            <span class="year-col-label">Min</span>
+            <input type="text" id="year_min_input" value="1876" />
+          </div>
+          <div class="year-custom-col">
+            <span class="year-col-label">Max</span>
+            <input type="text" id="year_max_input" value="2021" />
+          </div>
+        </div>
+
         <button id="load_data_button" class="button">Load data</button>
-        <label for="rank_low">Top rank cutoff</label>
-        <input
-          type="text"
-          id="rank_low"
-          value="25"
-          name="rank_low"
-        />
-        <label for="rank_high">Middle rank cutoff</label>
-        <input
-          type="text"
-          id="rank_high"
-          value="75"
-          name="rank_high"
-        />
+
+        <hr class="section_divider" />
+
+        <h3 class="panel-header">LDA Settings</h3>
+        <label>Rank cutoffs (1–99):</label>
+        <div class="dual-range-wrapper">
+          <div class="dual-range-track" id="rank_track"></div>
+          <input type="range" id="rank_low_range" min="1" max="99" value="25" step="1" />
+          <input type="range" id="rank_high_range" min="1" max="99" value="75" step="1" />
+        </div>
+        <div class="rank-cutoff-row">
+          <div class="rank-cutoff-col">
+            <span id="rank_top_label" class="rank-col-label">Top: 1–25</span>
+            <input type="text" id="rank_low" value="25" name="rank_low" />
+          </div>
+          <div class="rank-cutoff-col">
+            <span id="rank_high_label" class="rank-col-label">Mid: 26–75</span>
+            <input type="text" id="rank_high" value="75" name="rank_high" />
+          </div>
+          <div class="rank-cutoff-col rank-lower-col">
+            <span class="rank-col-label">Lower:</span>
+            <span id="rank_lower_hint" class="rank-lower-hint">76–100</span>
+          </div>
+        </div>
         <button id="load_lda_button" class="button">Run LDA</button>
       </div>
       <div class="visualizations">
@@ -37,5 +78,6 @@
         </div>
       </div>
     </div>
+    <div id="tooltip"></div>
   </body>
 </html>
