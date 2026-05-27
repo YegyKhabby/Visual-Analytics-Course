@@ -65,7 +65,7 @@ export function draw_scatterplot(data) {
 
   const rScale = d3.scaleSqrt()
     .domain(d3.extent(data.map((d) => d.num_of_reviews || 0)))
-    .range([3, 15])
+    .range([5, 18])
 
   /**
    * Drawing the data itself as circles
@@ -80,6 +80,9 @@ export function draw_scatterplot(data) {
     .attr("class", "scatterplot_circle")
     .merge(scatterplot_circle)
     .attr("fill", (d) => isLdaData ? groupColor[d.group] : "orange")
+    .attr("fill-opacity", isLdaData ? 0.85 : 0.7)
+    .attr("stroke", "black")
+    .attr("stroke-width", 1.5)
     .attr("r", (d) => isLdaData ? 5 : rScale(d.num_of_reviews))
     .attr("cx", (d) => margin.left + xScale(isLdaData ? d.lda1 : d.maxplaytime))
     .attr("cy", (d) => yScale(isLdaData ? d.lda2 : d.rating) + margin.top)
@@ -153,10 +156,55 @@ export function draw_scatterplot(data) {
 
   y_label.exit().remove()
 
-  /**
-   * Drawing the legend for LDA groups
-   */
+  // sort so small circles render on top of large ones
+  if (!isLdaData) {
+    g_scatterplot.selectAll(".scatterplot_circle")
+      .sort((a, b) => (b.num_of_reviews || 0) - (a.num_of_reviews || 0))
+  }
+
+  // legend
   g_scatterplot.selectAll(".legend_item").remove()
+
+  if (!isLdaData) {
+    const reviewExtent = d3.extent(data.map((d) => d.num_of_reviews || 0))
+    const midReviews = Math.round((reviewExtent[0] + reviewExtent[1]) / 2)
+    const sizeLegendData = [
+      { label: `${reviewExtent[0]} reviews`, r: rScale(reviewExtent[0]) },
+      { label: `${midReviews} reviews`, r: rScale(midReviews) },
+      { label: `${reviewExtent[1]} reviews`, r: rScale(reviewExtent[1]) },
+    ]
+
+    const legendX = width - margin.right - 80
+    let legendY = margin.top + 10
+
+    g_scatterplot.append("text")
+      .attr("class", "legend_item")
+      .attr("x", legendX)
+      .attr("y", legendY)
+      .style("font-size", "11px")
+      .style("font-weight", "bold")
+      .text("Circle size = # reviews")
+
+    legendY += 18
+    sizeLegendData.forEach((entry) => {
+      const g = g_scatterplot.append("g")
+        .attr("class", "legend_item")
+        .attr("transform", `translate(${legendX + entry.r}, ${legendY + entry.r})`)
+
+      g.append("circle")
+        .attr("r", entry.r)
+        .attr("fill", "orange")
+        .attr("opacity", 0.6)
+
+      g.append("text")
+        .attr("x", entry.r + 6)
+        .attr("y", 4)
+        .style("font-size", "10px")
+        .text(entry.label)
+
+      legendY += entry.r * 2 + 8
+    })
+  }
 
   if (isLdaData) {
     const legendData = [

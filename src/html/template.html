@@ -10,24 +10,6 @@
     <div class="root" id="root">
       <div class="banner" id="title">Board Game Analytics</div>
       <div class="sidepanel">
-        <button id="load_data_button" class="button">Load data</button>
-        <label for="rank_low">Top group — games ranked 1 to:</label>
-        <input
-          type="text"
-          id="rank_low"
-          value="25"
-          name="rank_low"
-        />
-        <label for="rank_high">Middle group — games ranked up to:</label>
-        <input
-          type="text"
-          id="rank_high"
-          value="75"
-          name="rank_high"
-        />
-        <p class="rank_hint">Everything beyond = Lower group</p>
-        <button id="load_lda_button" class="button">Run LDA</button>
-
         <details id="categories_details">
           <summary>Categories</summary>
           <input type="text" id="categories_search" placeholder="Search categories..." />
@@ -39,6 +21,27 @@
           <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
           <div id="mechanics_list"></div>
         </details>
+
+        <button id="load_data_button" class="button" style="margin-top: 15px;">Load data</button>
+
+        <hr class="section_divider" />
+
+        <label for="rank_low">Top group: games ranked 1 to:</label>
+        <input
+          type="text"
+          id="rank_low"
+          value="25"
+          name="rank_low"
+        />
+        <label for="rank_high" id="rank_high_label">Middle group: games ranked 25 to:</label>
+        <input
+          type="text"
+          id="rank_high"
+          value="75"
+          name="rank_high"
+        />
+        <label id="rank_lower_hint">Lower group: games ranked beyond 75</label>
+        <button id="load_lda_button" class="button">Run LDA</button>
       </div>
       <div class="visualizations">
         <div class="scatterplot">

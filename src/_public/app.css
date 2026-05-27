@@ -63,6 +63,12 @@ details {
   cursor: pointer;
 }
 
+.section_divider {
+  border: none;
+  border-top: 1px solid #c6d3dd;
+  margin: 15px 0;
+}
+
 summary {
   font-weight: bold;
   color: #284b63;
@@ -114,11 +120,6 @@ summary {
   display: none;
 }
 
-.rank_hint {
-  font-size: 0.75em;
-  color: #6b8499;
-  margin: 2px 0 10px 0;
-}
 
 input[type=text], select {
     width: 100%;

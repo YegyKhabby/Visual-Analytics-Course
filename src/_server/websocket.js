@@ -144,9 +144,16 @@ export function setupConnection(socket) {
 
       let games = []
       if (rawGames.length > 0) {
-        games = parameters.mode === "lda"
-          ? calculateLdaProjection(rawGames, parameters)
-          : preprocess_boardgames(rawGames)
+        if (parameters.mode === "lda") {
+          try {
+            games = calculateLdaProjection(rawGames, parameters)
+          } catch (e) {
+            console.error("LDA failed:", e.message)
+            games = []
+          }
+        } else {
+          games = preprocess_boardgames(rawGames)
+        }
       }
 
       socket.emit("freshData", {

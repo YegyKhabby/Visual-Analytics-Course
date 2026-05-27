@@ -17,9 +17,7 @@ socket.on("disconnect", () => {
   console.log("Disconnected from " + socketUrl + ".")
 })
 
-/**
- * Received once on connect: populates the Categories and Mechanics checkbox lists.
- */
+// fill categories and mechanics checkboxes on first connect
 socket.on("initData", (payload) => {
   const setupCheckboxes = (items, listElementId) => {
     const listEl = document.getElementById(listElementId)
@@ -49,9 +47,7 @@ socket.on("initData", (payload) => {
   setupCheckboxes(payload.mechanics, "mechanics_list")
 })
 
-/**
- * Filters the visible checkboxes in a list based on a search input.
- */
+// hide checkboxes that don't match the search input
 const setupSearch = (searchInputId, listElementId) => {
   document.getElementById(searchInputId).addEventListener("input", (e) => {
     const searchTerm = e.target.value.toLowerCase()
@@ -64,6 +60,19 @@ const setupSearch = (searchInputId, listElementId) => {
 
 setupSearch("categories_search", "categories_list")
 setupSearch("mechanics_search", "mechanics_list")
+
+const rankLowInput = document.getElementById("rank_low")
+const rankHighInput = document.getElementById("rank_high")
+const rankHighLabel = document.getElementById("rank_high_label")
+const rankLowerHint = document.getElementById("rank_lower_hint")
+
+const updateRankLabels = () => {
+  rankHighLabel.textContent = `Middle group: games ranked ${rankLowInput.value || "?"} to:`
+  rankLowerHint.textContent = `Lower group: games ranked beyond ${rankHighInput.value || "?"}`
+}
+rankLowInput.addEventListener("input", updateRankLabels)
+rankHighInput.addEventListener("input", updateRankLabels)
+updateRankLabels()
 
 /**
  * Callback, when the button is pressed to request the data from the server.

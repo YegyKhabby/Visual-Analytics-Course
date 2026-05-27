@@ -1125,3 +1125,143 @@ Add a small CSS rule for the hint so it is visually secondary:
   margin: 2px 0 10px 0;
 }
 ```
+
+---
+
+**You:** The Load data button is at the top of the sidebar, but the category and mechanic filters are below the LDA section. Shouldn't the filters come before Load data since they change what gets loaded?
+
+**Assistant:** Yes, move the `<details>` blocks above the Load data button. Add an `<hr>` between the two sections so it's clear that the LDA inputs are separate:
+
+```html
+<details id="categories_details">...</details>
+<details id="mechanics_details">...</details>
+
+<button id="load_data_button" class="button" style="margin-top: 15px;">Load data</button>
+
+<hr class="section_divider" />
+
+<label for="rank_low">Top group — games ranked 1 to:</label>
+<input type="text" id="rank_low" value="25" name="rank_low" />
+<label for="rank_high" id="rank_high_label">Middle group — games ranked 25 to:</label>
+<input type="text" id="rank_high" value="75" name="rank_high" />
+<p class="rank_hint">Everything beyond = Lower group</p>
+<button id="load_lda_button" class="button">Run LDA</button>
+```
+
+CSS for the line:
+
+```css
+.section_divider {
+  border: none;
+  border-top: 1px solid #c6d3dd;
+  margin: 15px 0;
+}
+```
+
+---
+
+**You:** The middle group label just says "games ranked up to:" — it doesn't show where the middle starts. If rank_low is 25 it should say "games ranked 25 to:". Can that update automatically when I type?
+
+**Assistant:** Add an `id` to the label and listen for `input` events on the rank_low field:
+
+```js
+const rankLowInput = document.getElementById("rank_low")
+const rankHighLabel = document.getElementById("rank_high_label")
+const updateRankHighLabel = () => {
+  rankHighLabel.textContent = `Middle group — games ranked ${rankLowInput.value || "?"} to:`
+}
+rankLowInput.addEventListener("input", updateRankHighLabel)
+updateRankHighLabel() // run once so it's correct on load
+```
+
+---
+
+**You:** When I select a category filter with very few games and click Run LDA, the whole server crashes with "Cannot compute inverse of Matrix, determinant is zero". How do I fix it?
+
+**Assistant:** LDA fails when too few games are passed to it. Wrap the call in a try/catch so the server doesn't go down — just return an empty array and the chart will clear itself:
+
+```js
+if (parameters.mode === "lda") {
+  try {
+    games = calculateLdaProjection(rawGames, parameters)
+  } catch (e) {
+    console.error("LDA failed:", e.message)
+    games = []
+  }
+} else {
+  games = preprocess_boardgames(rawGames)
+}
+```
+
+---
+
+**You:** The hint under the rank inputs says "Everything beyond = Lower group" — that's a bit odd. Can it say something cleaner and also show the actual rank_high number so I know where the lower group starts?
+
+**Assistant:** Add an `id` to the hint element and update it in JavaScript together with the middle group label. Listen for changes on the rank_high input as well:
+
+```js
+const rankHighInput = document.getElementById("rank_high")
+const rankLowerHint = document.getElementById("rank_lower_hint")
+
+const updateRankLabels = () => {
+  rankHighLabel.textContent = `Middle group — games ranked ${rankLowInput.value || "?"} to:`
+  rankLowerHint.textContent = `Lower group — games ranked beyond ${rankHighInput.value || "?"}`
+}
+rankLowInput.addEventListener("input", updateRankLabels)
+rankHighInput.addEventListener("input", updateRankLabels)
+updateRankLabels()
+```
+
+HTML:
+
+```html
+<p class="rank_hint" id="rank_lower_hint">Lower group — games ranked beyond 75</p>
+```
+
+---
+
+**You:** In the regular scatterplot the circles have different sizes but there is no legend saying what the size means. How do I add one?
+
+**Assistant:** In `draw_scatterplot`, after the existing `g_scatterplot.selectAll(".legend_item").remove()` line, add a size legend when `isLdaData` is false. Use the same `rScale` that sizes the circles, and pick three representative values from the data extent:
+
+```js
+if (!isLdaData) {
+  const reviewExtent = d3.extent(data.map((d) => d.num_of_reviews || 0))
+  const midReviews = Math.round((reviewExtent[0] + reviewExtent[1]) / 2)
+  const sizeLegendData = [
+    { label: `${reviewExtent[0]} reviews`, r: rScale(reviewExtent[0]) },
+    { label: `${midReviews} reviews`, r: rScale(midReviews) },
+    { label: `${reviewExtent[1]} reviews`, r: rScale(reviewExtent[1]) },
+  ]
+
+  const legendX = width - margin.right - 80
+  let legendY = margin.top + 10
+
+  g_scatterplot.append("text")
+    .attr("class", "legend_item")
+    .attr("x", legendX)
+    .attr("y", legendY)
+    .style("font-size", "11px")
+    .style("font-weight", "bold")
+    .text("Circle size = # reviews")
+
+  legendY += 18
+  sizeLegendData.forEach((entry) => {
+    const g = g_scatterplot.append("g")
+      .attr("class", "legend_item")
+      .attr("transform", `translate(${legendX + entry.r}, ${legendY + entry.r})`)
+
+    g.append("circle")
+      .attr("r", entry.r)
+      .attr("fill", "orange")
+      .attr("opacity", 0.6)
+
+    g.append("text")
+      .attr("x", entry.r + 6)
+      .attr("y", 4)
+      .style("font-size", "10px")
+      .text(entry.label)
+
+    legendY += entry.r * 2 + 8
+  })
+}
