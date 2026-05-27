@@ -22,25 +22,38 @@
           <div id="mechanics_list"></div>
         </details>
 
-        <button id="load_data_button" class="button" style="margin-top: 15px;">Load data</button>
+        <label>Year range:</label>
+        <div class="dual-range-wrapper">
+          <div class="dual-range-track" id="year_track"></div>
+          <input type="range" id="year_min_range" min="1876" max="2021" value="1876" step="1" />
+          <input type="range" id="year_max_range" min="1876" max="2021" value="2021" step="1" />
+        </div>
+        <div class="range-inputs-row">
+          <input type="text" id="year_min_input" value="1876" />
+          <input type="text" id="year_max_input" value="2021" />
+        </div>
+
+        <button id="load_data_button" class="button">Load data</button>
 
         <hr class="section_divider" />
 
-        <label for="rank_low">Top group: games ranked 1 to:</label>
-        <input
-          type="text"
-          id="rank_low"
-          value="25"
-          name="rank_low"
-        />
-        <label for="rank_high" id="rank_high_label">Middle group: games ranked 25 to:</label>
-        <input
-          type="text"
-          id="rank_high"
-          value="75"
-          name="rank_high"
-        />
-        <label id="rank_lower_hint">Lower group: games ranked beyond 75</label>
+        <label>Rank cutoffs (1–99):</label>
+        <div class="dual-range-wrapper">
+          <div class="dual-range-track" id="rank_track"></div>
+          <input type="range" id="rank_low_range" min="1" max="99" value="25" step="1" />
+          <input type="range" id="rank_high_range" min="1" max="99" value="75" step="1" />
+        </div>
+        <div class="rank-cutoff-row">
+          <div class="rank-cutoff-col">
+            <label for="rank_low" class="rank-col-label">Top ends at:</label>
+            <input type="text" id="rank_low" value="25" name="rank_low" />
+          </div>
+          <div class="rank-cutoff-col">
+            <label for="rank_high" id="rank_high_label" class="rank-col-label">Mid: 25 to 99</label>
+            <input type="text" id="rank_high" value="75" name="rank_high" />
+          </div>
+        </div>
+        <label id="rank_lower_hint">Lower: ranked beyond 75</label>
         <button id="load_lda_button" class="button">Run LDA</button>
       </div>
       <div class="visualizations">

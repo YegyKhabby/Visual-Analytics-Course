@@ -1265,3 +1265,127 @@ if (!isLdaData) {
     legendY += entry.r * 2 + 8
   })
 }
+
+---
+
+**You:** I want to add a dual-handle range slider for the rank cutoffs. The idea is one bar with two thumbs — drag the left thumb to change the top/middle boundary and the right thumb to change the middle/lower boundary. I also want the three sections of the track to be colored blue, orange, and red to match the LDA group colors. And I want to keep the text inputs so someone can also type a number directly.
+
+**Assistant:** You can do this with two stacked `<input type="range">` elements on top of a colored `<div>` track. The trick is making both inputs transparent with `pointer-events: none` except on the thumbs, so both are draggable but only the custom track is visible.
+
+In the HTML, wrap them in a container div:
+
+```html
+<div class="dual-range-wrapper">
+  <div class="dual-range-track" id="rank_track"></div>
+  <input type="range" id="rank_low_range" min="1" max="99" value="25" step="1" />
+  <input type="range" id="rank_high_range" min="1" max="99" value="75" step="1" />
+</div>
+```
+
+In CSS, position both inputs absolutely inside the wrapper and hide the native track:
+
+```css
+.dual-range-wrapper {
+  position: relative;
+  height: 30px;
+}
+
+.dual-range-track {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.dual-range-wrapper input[type=range] {
+  position: absolute;
+  width: 100%;
+  height: 30px;
+  top: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+}
+
+.dual-range-wrapper input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: pointer;
+}
+```
+
+In JavaScript, update the track's `linear-gradient` and the text inputs whenever either slider moves:
+
+```js
+function updateRankSlider() {
+  const lo = parseInt(rankLowRange.value)
+  const hi = parseInt(rankHighRange.value)
+  const loPercent = ((lo - 1) / 98) * 100
+  const hiPercent = ((hi - 1) / 98) * 100
+  rankTrack.style.background = `linear-gradient(to right,
+    #2f80ed 0%, #2f80ed ${loPercent}%,
+    #f2a93b ${loPercent}%, #f2a93b ${hiPercent}%,
+    #c0392b ${hiPercent}%, #c0392b 100%)`
+  rankLowInput.value = lo
+  rankHighInput.value = hi
+}
+```
+
+To sync the text inputs back to the sliders, listen on their `input` event and clamp the value so the two handles can never cross.
+
+---
+
+**You:** How do I add a year range filter that works the same way? The data has a year field ranging from 1876 to 2021. I want a dual-handle slider above the Load Data button that filters games by year before the server returns them.
+
+**Assistant:** Same structure as the rank slider but simpler — no colored track sections, just a single selected-range highlight. Add the HTML above the Load Data button:
+
+```html
+<label>Year range:</label>
+<div class="dual-range-wrapper">
+  <div class="dual-range-track" id="year_track"></div>
+  <input type="range" id="year_min_range" min="1876" max="2021" value="1876" step="1" />
+  <input type="range" id="year_max_range" min="1876" max="2021" value="2021" step="1" />
+</div>
+<div class="range-inputs-row">
+  <input type="text" id="year_min_input" value="1876" />
+  <input type="text" id="year_max_input" value="2021" />
+</div>
+```
+
+The track gradient shows the selected range in dark blue:
+
+```js
+function updateYearTrack() {
+  const lo = parseInt(yearMinRange.value)
+  const hi = parseInt(yearMaxRange.value)
+  const loPercent = ((lo - 1876) / 145) * 100
+  const hiPercent = ((hi - 1876) / 145) * 100
+  yearTrack.style.background = `linear-gradient(to right,
+    #c6d3dd 0%, #c6d3dd ${loPercent}%,
+    #284b63 ${loPercent}%, #284b63 ${hiPercent}%,
+    #c6d3dd ${hiPercent}%, #c6d3dd 100%)`
+}
+```
+
+In `requestData`, read the year inputs and include them in the socket payload:
+
+```js
+const yearMin = document.getElementById("year_min_input").value
+const yearMax = document.getElementById("year_max_input").value
+socket.emit("getData", { parameters: { ...parameters, yearMin, yearMax } })
+```
+
+On the server side in `websocket.js`, filter `rawGames` by year before passing to LDA or scatterplot preprocessing:
+
+```js
+rawGames = rawGames.filter(game => game.year >= yearMin && game.year <= yearMax)
+```
+
+This runs after the category and mechanics filters, so all three filters stack together.

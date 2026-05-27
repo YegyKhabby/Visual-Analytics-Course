@@ -130,3 +130,127 @@ input[type=text], select {
     border-radius: 4px;
     box-sizing: border-box;
   }
+
+/* dual-handle range slider */
+.dual-range-wrapper {
+  position: relative;
+  height: 30px;
+  margin: 4px 0;
+}
+
+.dual-range-track {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 3px;
+  pointer-events: none;
+  background: #c6d3dd;
+}
+
+.dual-range-wrapper input[type=range] {
+  position: absolute;
+  width: 100%;
+  height: 30px;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+}
+
+.dual-range-wrapper input[type=range]::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 0;
+}
+
+.dual-range-wrapper input[type=range]::-moz-range-track {
+  background: transparent;
+  height: 0;
+  border: none;
+}
+
+.dual-range-wrapper input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.dual-range-wrapper input[type=range]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid white;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* rank slider thumb colors */
+#rank_low_range::-webkit-slider-thumb  { background: #2f80ed; }
+#rank_low_range::-moz-range-thumb      { background: #2f80ed; }
+#rank_high_range::-webkit-slider-thumb { background: #c0392b; }
+#rank_high_range::-moz-range-thumb     { background: #c0392b; }
+
+/* year slider thumb color */
+#year_min_range::-webkit-slider-thumb { background: #284b63; }
+#year_min_range::-moz-range-thumb     { background: #284b63; }
+#year_max_range::-webkit-slider-thumb { background: #284b63; }
+#year_max_range::-moz-range-thumb     { background: #284b63; }
+
+/* compact text inputs shown below each slider */
+.range-inputs-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.range-inputs-row input[type=text] {
+  flex: 1;
+  width: auto;
+  padding: 5px 8px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.88em;
+}
+
+/* compact two-column layout for rank cutoff inputs */
+.rank-cutoff-row {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 4px 0;
+}
+
+.rank-cutoff-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-col-label {
+  font-size: 0.78em;
+  color: #555;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.rank-cutoff-col input[type=text] {
+  width: 100%;
+  padding: 6px 8px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.9em;
+  box-sizing: border-box;
+}

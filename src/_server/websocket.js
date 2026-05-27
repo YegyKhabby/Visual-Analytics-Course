@@ -142,6 +142,12 @@ export function setupConnection(socket) {
         })
       }
 
+      if (parameters.yearMin !== undefined && parameters.yearMax !== undefined) {
+        const yearMin = parseInt(parameters.yearMin)
+        const yearMax = parseInt(parameters.yearMax)
+        rawGames = rawGames.filter(game => game.year >= yearMin && game.year <= yearMax)
+      }
+
       let games = []
       if (rawGames.length > 0) {
         if (parameters.mode === "lda") {
