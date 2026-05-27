@@ -51,12 +51,15 @@ socket.on("initData", (payload) => {
     YEAR_MAX = payload.yearMax
     yearMinRange.min = YEAR_MIN
     yearMinRange.max = YEAR_MAX
-    yearMinRange.value = YEAR_MIN
     yearMaxRange.min = YEAR_MIN
     yearMaxRange.max = YEAR_MAX
     yearMaxRange.value = YEAR_MAX
-    yearMinInput.value = YEAR_MIN
     yearMaxInput.value = YEAR_MAX
+    // default start at 1990 — keeps the slider range tight (31 years)
+    // user can still type 1876 manually to include older games
+    const defaultStart = Math.max(YEAR_MIN, 1990)
+    yearMinRange.value = defaultStart
+    yearMinInput.value = defaultStart
     updateYearTrack()
   }
 })
