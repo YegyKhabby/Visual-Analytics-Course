@@ -217,7 +217,7 @@ let handleData = (payload) => {
   if (payload.parameters && payload.parameters.mode === "lda") {
     document.getElementById("title").textContent = "LDA 1 vs LDA 2"
   } else {
-    document.getElementById("title").textContent = "Maximum Playtime vs Rating"
+    document.getElementById("title").textContent = "Playtime vs Rating (sized by Reviews)"
   }
 
   draw_scatterplot(data.scatterplot)
