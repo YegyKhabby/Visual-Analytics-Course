@@ -244,6 +244,7 @@ input[type=text], select {
   color: #555;
   margin-bottom: 2px;
   display: block;
+  text-align: center;
 }
 
 .rank-cutoff-col input[type=text] {
