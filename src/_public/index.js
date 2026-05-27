@@ -49,18 +49,9 @@ socket.on("initData", (payload) => {
   if (payload.yearMin !== undefined) {
     YEAR_MIN = payload.yearMin
     YEAR_MAX = payload.yearMax
-    yearMinRange.min = YEAR_MIN
-    yearMinRange.max = YEAR_MAX
-    yearMaxRange.min = YEAR_MIN
-    yearMaxRange.max = YEAR_MAX
-    yearMaxRange.value = YEAR_MAX
-    yearMaxInput.value = YEAR_MAX
-    // default start at 1990 — keeps the slider range tight (31 years)
-    // user can still type 1876 manually to include older games
-    const defaultStart = Math.max(YEAR_MIN, 1990)
-    yearMinRange.value = defaultStart
-    yearMinInput.value = defaultStart
-    updateYearTrack()
+    // re-apply the active preset now that we know the real data range
+    const activeBtn = document.querySelector(".year-preset-btn.active")
+    if (activeBtn) activatePreset(activeBtn)
   }
 })
 
@@ -78,63 +69,30 @@ const setupSearch = (searchInputId, listElementId) => {
 setupSearch("categories_search", "categories_list")
 setupSearch("mechanics_search", "mechanics_list")
 
-// year range slider
+// year range filter — preset buttons
 let YEAR_MIN = 1876, YEAR_MAX = 2021
-const yearMinRange = document.getElementById("year_min_range")
-const yearMaxRange = document.getElementById("year_max_range")
 const yearMinInput = document.getElementById("year_min_input")
 const yearMaxInput = document.getElementById("year_max_input")
-const yearTrack = document.getElementById("year_track")
+const yearCustomRow = document.getElementById("year_custom_row")
+const yearPresetBtns = document.querySelectorAll(".year-preset-btn")
 
-// updates track gradient only — does NOT touch the text inputs
-function updateYearTrackOnly(lo, hi) {
-  const total = YEAR_MAX - YEAR_MIN
-  const loPercent = ((lo - YEAR_MIN) / total) * 100
-  const hiPercent = ((hi - YEAR_MIN) / total) * 100
-  yearTrack.style.background = `linear-gradient(to right, #c6d3dd 0%, #c6d3dd ${loPercent}%, #284b63 ${loPercent}%, #284b63 ${hiPercent}%, #c6d3dd ${hiPercent}%, #c6d3dd 100%)`
+function activatePreset(btn) {
+  yearPresetBtns.forEach(b => b.classList.remove("active"))
+  btn.classList.add("active")
+
+  if (btn.dataset.min === "custom") {
+    yearCustomRow.style.display = "flex"
+  } else {
+    yearCustomRow.style.display = "none"
+    yearMinInput.value = btn.dataset.min === "all" ? YEAR_MIN : parseInt(btn.dataset.min)
+    yearMaxInput.value = YEAR_MAX
+  }
 }
 
-// called from slider drag — also syncs text inputs
-function updateYearTrack() {
-  const lo = parseInt(yearMinRange.value)
-  const hi = parseInt(yearMaxRange.value)
-  yearMinInput.value = lo
-  yearMaxInput.value = hi
-  updateYearTrackOnly(lo, hi)
-}
+yearPresetBtns.forEach(btn => btn.addEventListener("click", () => activatePreset(btn)))
 
-yearMinRange.addEventListener("input", () => {
-  if (parseInt(yearMinRange.value) >= parseInt(yearMaxRange.value)) {
-    yearMinRange.value = parseInt(yearMaxRange.value) - 1
-  }
-  updateYearTrack()
-})
-
-yearMaxRange.addEventListener("input", () => {
-  if (parseInt(yearMaxRange.value) <= parseInt(yearMinRange.value)) {
-    yearMaxRange.value = parseInt(yearMinRange.value) + 1
-  }
-  updateYearTrack()
-})
-
-// when user types — only move the slider, never overwrite the field being typed in
-yearMinInput.addEventListener("input", () => {
-  const v = parseInt(yearMinInput.value)
-  if (!isNaN(v) && v >= YEAR_MIN && v < parseInt(yearMaxInput.value)) {
-    yearMinRange.value = v
-    updateYearTrackOnly(v, parseInt(yearMaxRange.value))
-  }
-})
-
-yearMaxInput.addEventListener("input", () => {
-  const v = parseInt(yearMaxInput.value)
-  if (!isNaN(v) && v <= YEAR_MAX && v > parseInt(yearMinInput.value)) {
-    yearMaxRange.value = v
-    updateYearTrackOnly(parseInt(yearMinRange.value), v)
-  }
-})
-
-updateYearTrack()
+// default: All
+activatePreset(yearPresetBtns[0])
 
 // rank range slider
 const RANK_MIN = 1, RANK_MAX = 99

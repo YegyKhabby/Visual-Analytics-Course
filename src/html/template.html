@@ -23,14 +23,15 @@
         </details>
 
         <label>Year range:</label>
-        <div class="dual-range-wrapper">
-          <div class="dual-range-track" id="year_track"></div>
-          <input type="range" id="year_min_range" min="1876" max="2021" value="1876" step="1" />
-          <input type="range" id="year_max_range" min="1876" max="2021" value="2021" step="1" />
+        <div class="year-presets">
+          <button class="year-preset-btn" data-min="all">All</button>
+          <button class="year-preset-btn" data-min="2000">2000+</button>
+          <button class="year-preset-btn" data-min="2010">2010+</button>
+          <button class="year-preset-btn" data-min="custom">Custom</button>
         </div>
-        <div class="range-inputs-row">
-          <input type="text" id="year_min_input" value="1876" />
-          <input type="text" id="year_max_input" value="2021" />
+        <div class="year-custom-row" id="year_custom_row" style="display:none">
+          <input type="text" id="year_min_input" value="1876" placeholder="from" />
+          <input type="text" id="year_max_input" value="2021" placeholder="to" />
         </div>
 
         <button id="load_data_button" class="button">Load data</button>

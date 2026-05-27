@@ -204,20 +204,42 @@ input[type=text], select {
 #rank_high_range::-webkit-slider-thumb { background: #c0392b; }
 #rank_high_range::-moz-range-thumb     { background: #c0392b; }
 
-/* year slider thumb color */
-#year_min_range::-webkit-slider-thumb { background: #284b63; }
-#year_min_range::-moz-range-thumb     { background: #284b63; }
-#year_max_range::-webkit-slider-thumb { background: #284b63; }
-#year_max_range::-moz-range-thumb     { background: #284b63; }
+/* year preset buttons */
+.year-presets {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 8px 0;
+}
 
-/* compact text inputs shown below each slider */
-.range-inputs-row {
+.year-preset-btn {
+  flex: 1;
+  padding: 6px 0;
+  border: 1px solid #c6d3dd;
+  border-radius: 4px;
+  background: white;
+  color: #1f2d36;
+  font-size: 0.82em;
+  cursor: pointer;
+}
+
+.year-preset-btn:hover {
+  border-color: #f2a93b;
+}
+
+.year-preset-btn.active {
+  background: #284b63;
+  color: white;
+  border-color: #284b63;
+}
+
+/* custom year text inputs — shown only when Custom is active */
+.year-custom-row {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
 }
 
-.range-inputs-row input[type=text] {
+.year-custom-row input[type=text] {
   width: calc(50% - 4px);
   flex: 1 1 0;
   min-width: 0;
