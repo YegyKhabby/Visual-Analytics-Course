@@ -111,7 +111,9 @@ export function setupConnection(socket) {
       const rawGames = JSON.parse(fileContent)
       const categories = [...new Set(rawGames.flatMap(g => g.types.categories || []).map(c => c.name))].filter(Boolean).sort()
       const mechanics = [...new Set(rawGames.flatMap(g => g.types.mechanics || []).map(m => m.name))].filter(Boolean).sort()
-      socket.emit("initData", { categories, mechanics })
+      const yearMin = Math.min(...rawGames.map(g => g.year))
+      const yearMax = Math.max(...rawGames.map(g => g.year))
+      socket.emit("initData", { categories, mechanics, yearMin, yearMax })
     })
   })
 

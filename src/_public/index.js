@@ -45,6 +45,20 @@ socket.on("initData", (payload) => {
 
   setupCheckboxes(payload.categories, "categories_list")
   setupCheckboxes(payload.mechanics, "mechanics_list")
+
+  if (payload.yearMin !== undefined) {
+    YEAR_MIN = payload.yearMin
+    YEAR_MAX = payload.yearMax
+    yearMinRange.min = YEAR_MIN
+    yearMinRange.max = YEAR_MAX
+    yearMinRange.value = YEAR_MIN
+    yearMaxRange.min = YEAR_MIN
+    yearMaxRange.max = YEAR_MAX
+    yearMaxRange.value = YEAR_MAX
+    yearMinInput.value = YEAR_MIN
+    yearMaxInput.value = YEAR_MAX
+    updateYearTrack()
+  }
 })
 
 // hide checkboxes that don't match the search input
@@ -62,7 +76,7 @@ setupSearch("categories_search", "categories_list")
 setupSearch("mechanics_search", "mechanics_list")
 
 // year range slider
-const YEAR_MIN = 1876, YEAR_MAX = 2021
+let YEAR_MIN = 1876, YEAR_MAX = 2021
 const yearMinRange = document.getElementById("year_min_range")
 const yearMaxRange = document.getElementById("year_max_range")
 const yearMinInput = document.getElementById("year_min_input")
