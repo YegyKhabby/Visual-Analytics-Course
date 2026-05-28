@@ -59,7 +59,7 @@ head,
 }
 
 .panel-header {
-  margin: 0 0 10px 0;
+  margin: 0;
   font-size: 0.95em;
   font-weight: bold;
   color: #284b63;
@@ -99,6 +99,68 @@ summary {
   height: 100%;
 }
 
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0 6px 0;
+}
+
+.toggle-label-text {
+  font-size: 0.85em;
+  color: #1f2d36;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #c6d3dd;
+  border-radius: 20px;
+  transition: background-color 0.2s;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #284b63;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+}
+
+.panel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
 .button {
     /* 300px: width if the sidepanel defined in the grid-template for #root */
     /* 40px = 2 times 20px padding in .sidepanel */
@@ -116,6 +178,14 @@ summary {
 
 .button:hover {
     border-color: #f2a93b;
+}
+
+.button.button-sm {
+  width: 100px;
+  height: 20px;
+  padding: 0 7px;
+  font-size: 0.6em;
+  border-radius: 10px;
 }
 
 #tooltip {
@@ -191,6 +261,7 @@ input[type=text], select {
   width: 18px;
   height: 18px;
   border-radius: 50%;
+  margin-top: -9px;
   pointer-events: auto;
   cursor: pointer;
   border: 2px solid white;
@@ -271,43 +342,35 @@ input[type=text], select {
   box-sizing: border-box;
 }
 
-/* compact two-column layout for rank cutoff inputs */
+/* rank cutoff grid: labels top row, inputs bottom row, interleaved */
 .rank-cutoff-row {
-  display: flex;
-  gap: 8px;
-  margin: 4px 0 4px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "top  .    mid  .    low"
+    ".    rlo  .    rhi  .  ";
+  column-gap: 8px;
+  row-gap: 2px;
+  margin: 4px 0;
 }
 
-.rank-cutoff-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
+#rank_top_label  { grid-area: top; color: #2f80ed; }
+#rank_high_label { grid-area: mid; color: #f2a93b; }
+#rank_low_hint   { grid-area: low; color: #c0392b; }
+#rank_low        { grid-area: rlo; }
+#rank_high       { grid-area: rhi; }
 
 .rank-col-label {
   font-size: 0.78em;
   color: #555;
-  margin-bottom: 2px;
   display: block;
   text-align: center;
 }
 
-.rank-cutoff-col input[type=text] {
-  width: 100%;
+.rank-cutoff-row input[type=text] {
   padding: 4px 6px;
   margin: 0;
   text-align: center;
   font-size: 0.9em;
-  box-sizing: border-box;
-}
-
-.rank-lower-col {
-  justify-content: center;
-  align-items: center;
-}
-
-.rank-lower-hint {
-  font-size: 0.85em;
-  color: #c0392b;
-  text-align: center;
 }

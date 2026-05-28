@@ -17,45 +17,43 @@ socket.on("disconnect", () => {
   console.log("Disconnected from " + socketUrl + ".")
 })
 
-// fill categories and mechanics checkboxes on first connect
 socket.on("initData", (payload) => {
+  console.log("Received initial data:", payload);
+  
   const setupCheckboxes = (items, listElementId) => {
-    const listEl = document.getElementById(listElementId)
-    while (listEl.firstChild) listEl.removeChild(listEl.firstChild)
-
+    const listEl = document.getElementById(listElementId);
+    listEl.innerHTML = '';
     items.forEach(item => {
-      const wrapper = document.createElement("div")
-      wrapper.className = "checkbox-wrapper"
+      const wrapper = document.createElement('div');
+      wrapper.className = 'checkbox-wrapper';
+      
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = `${listElementId}_${item}`;
+      checkbox.value = item;
+      checkbox.className = `${listElementId}_checkbox`;
+      
+      const label = document.createElement('label');
+      label.htmlFor = checkbox.id;
+      label.textContent = item;
+      
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(label);
+      listEl.appendChild(wrapper);
+    });
+  };
 
-      const checkbox = document.createElement("input")
-      checkbox.type = "checkbox"
-      checkbox.id = `${listElementId}_${item}`
-      checkbox.value = item
-      checkbox.className = `${listElementId}_checkbox`
-
-      const label = document.createElement("label")
-      label.htmlFor = checkbox.id
-      label.textContent = item
-
-      wrapper.appendChild(checkbox)
-      wrapper.appendChild(label)
-      listEl.appendChild(wrapper)
-    })
-  }
-
-  setupCheckboxes(payload.categories, "categories_list")
-  setupCheckboxes(payload.mechanics, "mechanics_list")
+  setupCheckboxes(payload.categories, "categories_list");
+  setupCheckboxes(payload.mechanics, "mechanics_list");
 
   if (payload.yearMin !== undefined) {
     YEAR_MIN = payload.yearMin
     YEAR_MAX = payload.yearMax
-    // re-apply the active preset now that we know the real data range
     const activeBtn = document.querySelector(".year-preset-btn.active")
     if (activeBtn) activatePreset(activeBtn)
   }
-})
+});
 
-// hide checkboxes that don't match the search input
 const setupSearch = (searchInputId, listElementId) => {
   document.getElementById(searchInputId).addEventListener("input", (e) => {
     const searchTerm = e.target.value.toLowerCase()
@@ -103,7 +101,7 @@ const rankHighInput = document.getElementById("rank_high")
 const rankTrack = document.getElementById("rank_track")
 const rankTopLabel = document.getElementById("rank_top_label")
 const rankHighLabel = document.getElementById("rank_high_label")
-const rankLowerHint = document.getElementById("rank_lower_hint")
+const rankLowHint = document.getElementById("rank_low_hint")
 let ldaActive = false
 
 function requestLdaData() {
@@ -124,7 +122,7 @@ function updateRankTrackOnly(lo, hi) {
   rankTrack.style.background = `linear-gradient(to right, #2f80ed 0%, #2f80ed ${loPercent}%, #f2a93b ${loPercent}%, #f2a93b ${hiPercent}%, #c0392b ${hiPercent}%, #c0392b 100%)`
   rankTopLabel.textContent = `Top: 1–${lo}`
   rankHighLabel.textContent = `Mid: ${lo + 1}–${hi}`
-  rankLowerHint.textContent = `${hi + 1}–100`
+  rankLowHint.textContent = `Low: ${hi + 1}–100`
   rankLowRange.style.zIndex = lo > RANK_MAX - 10 ? 3 : 2
   rankHighRange.style.zIndex = lo > RANK_MAX - 10 ? 2 : 3
 }
@@ -182,10 +180,10 @@ updateRankSlider()
  * @param {*} parameters
  */
 let requestData = (parameters) => {
-  console.log(`requesting data from webserver`)
+  console.log(`requesting data from webserver (every 2sec)`)
 
-  const selectedCategories = Array.from(document.querySelectorAll(".categories_list_checkbox:checked")).map(cb => cb.value)
-  const selectedMechanics = Array.from(document.querySelectorAll(".mechanics_list_checkbox:checked")).map(cb => cb.value)
+  const selectedCategories = Array.from(document.querySelectorAll('.categories_list_checkbox:checked')).map(cb => cb.value);
+  const selectedMechanics = Array.from(document.querySelectorAll('.mechanics_list_checkbox:checked')).map(cb => cb.value);
   const yearMin = document.getElementById("year_min_input").value
   const yearMax = document.getElementById("year_max_input").value
 
@@ -205,7 +203,23 @@ let requestData = (parameters) => {
  */
 document.getElementById("load_data_button").onclick = () => {
   ldaActive = false
+  document.getElementById("title").textContent = "Loading...";
   requestData({})
+}
+
+document.getElementById("uniform_size_toggle").addEventListener("change", () => {
+  if (data.scatterplot) draw_scatterplot(data.scatterplot)
+})
+
+document.getElementById("reset_filters_button").onclick = () => {
+  document.querySelectorAll(".categories_list_checkbox, .mechanics_list_checkbox").forEach(cb => cb.checked = false)
+  const categoriesSearch = document.getElementById("categories_search")
+  const mechanicsSearch = document.getElementById("mechanics_search")
+  categoriesSearch.value = ""
+  mechanicsSearch.value = ""
+  categoriesSearch.dispatchEvent(new Event("input"))
+  mechanicsSearch.dispatchEvent(new Event("input"))
+  activatePreset(yearPresetBtns[0])
 }
 
 document.getElementById("load_lda_button").onclick = () => {
@@ -229,10 +243,19 @@ let handleData = (payload) => {
   console.log(payload)
   data.scatterplot = payload.data
 
+  // Check if we requested LDA mode
   if (payload.parameters && payload.parameters.mode === "lda") {
-    document.getElementById("title").textContent = "LDA 1 vs LDA 2"
+    // Handle the title for LDA Button
+    document.getElementById("title").textContent = "LDA1 vs LDA2";
   } else {
-    document.getElementById("title").textContent = "Playtime vs Rating (sized by Reviews)"
+    // Handle the title for the regular Data Button dynamically
+    let samplePoint = data.scatterplot[0];
+    
+    // Extract keys and filter out 'title' (and maybe 'group' if it exists)
+    let variables = Object.keys(samplePoint).filter(key => key !== 'title' && key !== 'group');
+    if (variables.length >= 2) {
+      document.getElementById("title").textContent = `${variables[0]} vs ${variables[1]}`;
+    }
   }
 
   draw_scatterplot(data.scatterplot)
