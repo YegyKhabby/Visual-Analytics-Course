@@ -1386,3 +1386,254 @@ document.getElementById("uniform_size_toggle").addEventListener("change", () => 
 ```
 
 The listener captures the `data` binding rather than its value, so even though `data` is declared later in the module, the closure correctly reads `data.scatterplot` at the time the event fires.
+
+---
+
+**You:** How do I add a color-coded legend to a D3 chart that only appears when the data has group assignments?
+
+**Professor:** Use D3's enter/update/exit pattern with `<g>` elements, one per group. Bind the group keys to the selection so the legend automatically appears when group data is present and disappears otherwise:
+
+```js
+const legendData = isLdaData ? Object.keys(groupColor) : []
+
+let legend = g_scatterplot.selectAll(".legend-group").data(legendData)
+
+let legendEnter = legend
+  .enter()
+  .append("g")
+  .attr("class", "legend-group")
+
+legendEnter
+  .append("rect")
+  .attr("class", "legend-rect")
+  .attr("width", 15)
+  .attr("height", 15)
+
+legendEnter
+  .append("text")
+  .attr("class", "legend-text")
+  .attr("x", 25)
+  .attr("y", 12)
+  .style("font-size", "12px")
+  .style("text-transform", "capitalize")
+
+let legendMerge = legendEnter.merge(legend)
+  .attr("transform", (d, i) => "translate(" + (width - margin.right - 60) + "," + (margin.top + i * 20) + ")")
+
+legendMerge.select(".legend-rect")
+  .attr("fill", (d) => groupColor[d])
+
+legendMerge.select(".legend-text")
+  .text((d) => d)
+
+legend.exit().remove()
+```
+
+When `isLdaData` is false, `legendData` is an empty array, so all existing legend groups are removed by `.exit().remove()`.
+
+---
+
+**You:** How do I update a dashboard title dynamically to reflect the names of the two variables currently being displayed?
+
+**Professor:** Show a "Loading…" placeholder immediately on button click, then in the data handler derive the title from the keys of the first data point. Filter out metadata fields so only the actual variable names are used:
+
+```js
+document.getElementById("load_data_button").onclick = () => {
+  document.getElementById("title").textContent = "Loading...";
+  requestData({})
+}
+```
+
+```js
+let handleData = (payload) => {
+  data.scatterplot = payload.data
+
+  if (payload.parameters && payload.parameters.mode === "lda") {
+    document.getElementById("title").textContent = "LDA1 vs LDA2";
+  } else {
+    let samplePoint = data.scatterplot[0];
+    let variables = Object.keys(samplePoint).filter(key => key !== 'title' && key !== 'group');
+    if (variables.length >= 2) {
+      document.getElementById("title").textContent = `${variables[0]} vs ${variables[1]}`;
+    }
+  }
+
+  draw_scatterplot(data.scatterplot)
+}
+```
+
+---
+
+**You:** How do I support multiple display modes over a single socket connection, updating the title and visualization differently for each mode?
+
+**Professor:** Pass a `mode` field in the request parameters object and inspect it in the central data handler. Branch on `payload.parameters.mode` to apply mode-specific UI updates before drawing:
+
+```js
+document.getElementById("load_lda_button").onclick = () => {
+  let rankLow  = document.getElementById("rank_low").value
+  let rankHigh = document.getElementById("rank_high").value
+  requestData({ mode: "lda", rankLow, rankHigh })
+}
+```
+
+```js
+let handleData = (payload) => {
+  data.scatterplot = payload.data
+
+  if (payload.parameters && payload.parameters.mode === "lda") {
+    document.getElementById("title").textContent = "LDA1 vs LDA2";
+  } else {
+    let samplePoint = data.scatterplot[0];
+    let variables = Object.keys(samplePoint).filter(key => key !== 'title' && key !== 'group');
+    if (variables.length >= 2) {
+      document.getElementById("title").textContent = `${variables[0]} vs ${variables[1]}`;
+    }
+  }
+
+  draw_scatterplot(data.scatterplot)
+}
+```
+
+The mode value travels from the button click → `requestData` → socket emission → server → back in `freshData`'s `payload.parameters`, so the handler can distinguish modes without adding a separate socket event.
+
+---
+
+**You:** How do I add collapsible, searchable checkbox filter lists to a real-time socket dashboard?
+
+**Professor:** On the server, compute the unique filter values once on connection and emit them as an init event. On the client, build the checkbox list from that payload, wire a live-search input to show/hide items, and include the checked values in each data request. Server-side filtering then applies before the data transformation runs.
+
+Server — emit unique values on connection:
+
+```js
+socket.on("getInitData", () => {
+  fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
+    if (error) { console.error(error); return }
+    const rawGames = JSON.parse(fileContent)
+    const categories = [...new Set(rawGames.flatMap(g => g.types.categories || []).map(c => c.name))].filter(Boolean).sort()
+    const mechanics  = [...new Set(rawGames.flatMap(g => g.types.mechanics  || []).map(m => m.name))].filter(Boolean).sort()
+    socket.emit("initData", { categories, mechanics })
+  })
+})
+```
+
+Apply the selected filters in the data handler before the data transformation:
+
+```js
+let rawGames = JSON.parse(fileContent)
+
+if (parameters.selectedCategories && parameters.selectedCategories.length > 0) {
+  rawGames = rawGames.filter(game => {
+    const gameCats = (game.types.categories || []).map(c => c.name)
+    return parameters.selectedCategories.some(cat => gameCats.includes(cat))
+  })
+}
+
+if (parameters.selectedMechanics && parameters.selectedMechanics.length > 0) {
+  rawGames = rawGames.filter(game => {
+    const gameMechs = (game.types.mechanics || []).map(m => m.name)
+    return parameters.selectedMechanics.some(mech => gameMechs.includes(mech))
+  })
+}
+
+let games = rawGames.length > 0
+  ? (parameters.mode === "lda" ? calculateLdaProjection(rawGames, parameters) : preprocess_boardgames(rawGames))
+  : []
+```
+
+HTML — collapsible `<details>` sections with a search input and an empty list container:
+
+```html
+<details id="categories_details">
+  <summary>Categories</summary>
+  <input type="text" id="categories_search" placeholder="Search categories..." />
+  <div id="categories_list"></div>
+</details>
+
+<details id="mechanics_details">
+  <summary>Mechanics</summary>
+  <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
+  <div id="mechanics_list"></div>
+</details>
+```
+
+CSS:
+
+```css
+#categories_list, #mechanics_list {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  background: white;
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.checkbox-wrapper {
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-wrapper input {
+  margin-right: 8px;
+}
+
+details { margin-top: 15px; cursor: pointer; }
+summary { font-weight: bold; }
+```
+
+Client — request init data on connect, build checkboxes, and wire search:
+
+```js
+socket.on("connect", () => {
+  socket.emit("getInitData")
+})
+
+socket.on("initData", (payload) => {
+  const setupCheckboxes = (items, listElementId) => {
+    const listEl = document.getElementById(listElementId)
+    listEl.innerHTML = ''
+    items.forEach(item => {
+      const wrapper  = document.createElement('div')
+      wrapper.className = 'checkbox-wrapper'
+      const checkbox = document.createElement('input')
+      checkbox.type      = 'checkbox'
+      checkbox.id        = `${listElementId}_${item}`
+      checkbox.value     = item
+      checkbox.className = `${listElementId}_checkbox`
+      const label    = document.createElement('label')
+      label.htmlFor  = checkbox.id
+      label.textContent = item
+      wrapper.appendChild(checkbox)
+      wrapper.appendChild(label)
+      listEl.appendChild(wrapper)
+    })
+  }
+  setupCheckboxes(payload.categories, "categories_list")
+  setupCheckboxes(payload.mechanics,  "mechanics_list")
+})
+
+const setupSearch = (searchInputId, listElementId) => {
+  document.getElementById(searchInputId).addEventListener("input", (e) => {
+    const searchTerm = e.target.value.toLowerCase()
+    Array.from(document.getElementById(listElementId).getElementsByClassName("checkbox-wrapper")).forEach(wrapper => {
+      wrapper.style.display = wrapper.textContent.toLowerCase().includes(searchTerm) ? "" : "none"
+    })
+  })
+}
+
+setupSearch("categories_search", "categories_list")
+setupSearch("mechanics_search",  "mechanics_list")
+```
+
+Include the checked values in every data request:
+
+```js
+let requestData = (parameters) => {
+  const selectedCategories = Array.from(document.querySelectorAll('.categories_list_checkbox:checked')).map(cb => cb.value)
+  const selectedMechanics  = Array.from(document.querySelectorAll('.mechanics_list_checkbox:checked')).map(cb => cb.value)
+  socket.emit("getData", {
+    parameters: { ...parameters, selectedCategories, selectedMechanics }
+  })
+}
+```
