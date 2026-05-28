@@ -3,20 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Board Game Analytics</title>
+    <title>Visualization Dashboard</title>
   </head>
   <body>
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <div class="root" id="root">
-      <div class="banner" id="title">Board Game Analytics</div>
+      <div class="banner", id="title">Visualization Dashboard</div>
       <div class="sidepanel">
-        <h3 class="panel-header">Data Filters</h3>
+        <div class="panel-header-row">
+          <h3 class="panel-header">Data Filters</h3>
+          <button id="reset_filters_button" class="button button-sm">Reset Filters</button>
+        </div>
         <details id="categories_details">
           <summary>Categories</summary>
           <input type="text" id="categories_search" placeholder="Search categories..." />
           <div id="categories_list"></div>
         </details>
-
+        
         <details id="mechanics_details">
           <summary>Mechanics</summary>
           <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
@@ -41,6 +44,14 @@
           </div>
         </div>
 
+        <div class="toggle-row">
+          <label for="uniform_size_toggle" class="toggle-label-text">Uniform circle size</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="uniform_size_toggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
         <button id="load_data_button" class="button">Load data</button>
 
         <hr class="section_divider" />
@@ -53,18 +64,11 @@
           <input type="range" id="rank_high_range" min="1" max="99" value="75" step="1" />
         </div>
         <div class="rank-cutoff-row">
-          <div class="rank-cutoff-col">
-            <span id="rank_top_label" class="rank-col-label">Top: 1–25</span>
-            <input type="text" id="rank_low" value="25" name="rank_low" />
-          </div>
-          <div class="rank-cutoff-col">
-            <span id="rank_high_label" class="rank-col-label">Mid: 26–75</span>
-            <input type="text" id="rank_high" value="75" name="rank_high" />
-          </div>
-          <div class="rank-cutoff-col rank-lower-col">
-            <span class="rank-col-label">Lower:</span>
-            <span id="rank_lower_hint" class="rank-lower-hint">76–100</span>
-          </div>
+          <span id="rank_top_label" class="rank-col-label">Top: 1–25</span>
+          <input type="text" id="rank_low" value="25" name="rank_low" />
+          <span id="rank_high_label" class="rank-col-label">Mid: 26–75</span>
+          <input type="text" id="rank_high" value="75" name="rank_high" />
+          <span id="rank_low_hint" class="rank-col-label">Low: 76–100</span>
         </div>
         <button id="load_lda_button" class="button">Run LDA</button>
       </div>
