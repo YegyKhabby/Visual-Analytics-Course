@@ -69,6 +69,34 @@ const setupSearch = (searchInputId, listElementId) => {
 setupSearch("categories_search", "categories_list")
 setupSearch("mechanics_search", "mechanics_list")
 
+const clearCheckboxGroup = (listElementId, checkboxClass, searchInputId) => {
+  document.querySelectorAll(`.${checkboxClass}:checked`).forEach(cb => {
+    cb.checked = false
+  })
+
+  if (searchInputId) {
+    const searchInput = document.getElementById(searchInputId)
+    if (searchInput) {
+      searchInput.value = ""
+    }
+  }
+
+  const listEl = document.getElementById(listElementId)
+  if (listEl) {
+    Array.from(listEl.getElementsByClassName("checkbox-wrapper")).forEach(wrapper => {
+      wrapper.style.display = ""
+    })
+  }
+}
+
+document.getElementById("categories_clear_all").addEventListener("click", () => {
+  clearCheckboxGroup("categories_list", "categories_list_checkbox", "categories_search")
+})
+
+document.getElementById("mechanics_clear_all").addEventListener("click", () => {
+  clearCheckboxGroup("mechanics_list", "mechanics_list_checkbox", "mechanics_search")
+})
+
 // year range filter — preset buttons
 let YEAR_MIN = 1876, YEAR_MAX = 2021
 const yearMinInput = document.getElementById("year_min_input")
