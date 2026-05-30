@@ -92,6 +92,9 @@ export function draw_scatterplot(data) {
             `<strong>${d.title}</strong>`,
             `LDA 1: ${d.lda1.toFixed(3)}`,
             `LDA 2: ${d.lda2.toFixed(3)}`,
+            `Rating: ${d.rating.toFixed(2)}`,
+            `Max playtime: ${d.maxplaytime} min`,
+            `Reviews: ${d.num_of_reviews.toLocaleString()}`,
           ]
         : [
             `<strong>${d.title}</strong>`,

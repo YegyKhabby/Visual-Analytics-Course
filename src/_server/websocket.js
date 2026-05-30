@@ -60,6 +60,9 @@ function calculateLdaProjection(rawGames, parameters) {
       group: game.group,
       lda1: coordinates[index][0],
       lda2: coordinates[index][1],
+      rating: game.rating,
+      num_of_reviews: game.reviews,
+      maxplaytime: game.maxplaytime,
     }
   })
 }
