@@ -92,19 +92,6 @@ export function setupConnection(socket) {
    * # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
    */
 
-
-  /**
-   * Listener that is called, if a message was sent with the topic "getData"
-   * 
-   * In this case, the following is done:
-   * - Read in the data (.csv in this case) a a stream
-   *      (Stream -> data is read in line by line)
-   * - Do data preprocessing while reading in:
-   *      - Convert values, that can be represented as numbers to numbers
-   *      - Calculate the BMI for every data row (person)
-   *      - Filtering: if the row has a value, that contradicts the filtering parameters, data row will be excluded
-   *          (in this case: weight should not be larger than the max_weight filter-parameter)
-   */
   socket.on("getInitData", () => {
     fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
       if (error) {

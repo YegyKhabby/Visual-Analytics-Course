@@ -1,5 +1,11 @@
 import * as d3 from "d3"
 
+let zoomState = {
+  dataRef: null,
+  xDomain: null,
+  yDomain: null,
+}
+
 export function draw_scatterplot(data) {
   console.log("draw board-game scatterplot")
   console.log(data)
@@ -29,12 +35,23 @@ export function draw_scatterplot(data) {
   let height = parseInt(svg.style("height"))
   const tooltip = d3.select("#tooltip")
   const isLdaData = data.length > 0 && data[0].lda1 !== undefined
+  const plotWidth = width - margin.left - margin.right
+  const plotHeight = height - margin.top - margin.bottom
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
 
   if (data.length === 0) {
     g_scatterplot.selectAll(".scatterplot_circle").remove()
     g_scatterplot.selectAll(".x_label").remove()
     g_scatterplot.selectAll(".y_label").remove()
     g_scatterplot.selectAll(".legend_item").remove()
+    g_scatterplot.selectAll(".zoom_layer").remove()
+    zoomState = {
+      dataRef: null,
+      xDomain: null,
+      yDomain: null,
+    }
+    svg.on(".scatterplotZoom", null)
+    d3.select(window).on(".scatterplotZoom", null)
     return
   }
   const groupColor = {
@@ -46,22 +63,37 @@ export function draw_scatterplot(data) {
   /**
    * Scale function for the x-axis
    */
+  const fullXDomain = isLdaData
+    ? d3.extent(data.map((d) => d.lda1))
+    : [0, d3.max(data.map((d) => d.maxplaytime))]
+
   const xScale = d3
     .scaleLinear()
-    .domain(isLdaData
-      ? d3.extent(data.map((d) => d.lda1))
-      : [0, d3.max(data.map((d) => d.maxplaytime))])
-    .range([0, width - margin.left - margin.right])
+    .domain(fullXDomain)
+    .range([0, plotWidth])
 
   /**
    * Scale unction for the y-axis
    */
-  const yExtent = d3.extent(data.map((d) => isLdaData ? d.lda2 : d.rating))
-  if (yExtent[0] === yExtent[1]) { yExtent[0] -= 0.5; yExtent[1] += 0.5 }
+  const fullYDomain = d3.extent(data.map((d) => isLdaData ? d.lda2 : d.rating))
+  if (fullYDomain[0] === fullYDomain[1]) { fullYDomain[0] -= 0.5; fullYDomain[1] += 0.5 }
   const yScale = d3
     .scaleLinear()
-    .domain(yExtent)
-    .range([height - margin.top - margin.bottom, 0])
+    .domain(fullYDomain)
+    .range([plotHeight, 0])
+
+  if (zoomState.dataRef !== data) {
+    zoomState = {
+      dataRef: data,
+      xDomain: null,
+      yDomain: null,
+    }
+  }
+
+  if (zoomState.xDomain && zoomState.yDomain) {
+    xScale.domain(zoomState.xDomain)
+    yScale.domain(zoomState.yDomain)
+  }
 
   const rScale = d3.scaleSqrt()
     .domain(d3.extent(data.map((d) => d.num_of_reviews || 0)))
@@ -247,4 +279,92 @@ export function draw_scatterplot(data) {
         .style("font-size", "12px")
     })
   }
+
+  const zoomRect = g_scatterplot.selectAll(".zoom_layer")
+    .data([null])
+    .join("rect")
+    .attr("class", "zoom_layer")
+    .attr("fill", "#284b63")
+    .attr("fill-opacity", 0.12)
+    .attr("stroke", "#284b63")
+    .attr("stroke-dasharray", "4 3")
+    .style("display", "none")
+    .style("pointer-events", "none")
+
+  let dragStart = null
+
+  svg
+    .on("mousedown.scatterplotZoom", (event) => {
+      if (event.button !== 0) return
+
+      const [mouseX, mouseY] = d3.pointer(event, svg.node())
+      const plotX = mouseX - margin.left
+      const plotY = mouseY - margin.top
+
+      if (plotX < 0 || plotX > plotWidth || plotY < 0 || plotY > plotHeight) return
+
+      dragStart = {
+        x: clamp(plotX, 0, plotWidth),
+        y: clamp(plotY, 0, plotHeight),
+      }
+
+      tooltip.style("display", "none")
+      zoomRect
+        .attr("x", margin.left + dragStart.x)
+        .attr("y", margin.top + dragStart.y)
+        .attr("width", 0)
+        .attr("height", 0)
+        .style("display", null)
+
+      d3.select(window)
+        .on("mousemove.scatterplotZoom", (moveEvent) => {
+          if (!dragStart) return
+
+          const [moveX, moveY] = d3.pointer(moveEvent, svg.node())
+          const currentX = clamp(moveX - margin.left, 0, plotWidth)
+          const currentY = clamp(moveY - margin.top, 0, plotHeight)
+
+          zoomRect
+            .attr("x", margin.left + Math.min(dragStart.x, currentX))
+            .attr("y", margin.top + Math.min(dragStart.y, currentY))
+            .attr("width", Math.abs(currentX - dragStart.x))
+            .attr("height", Math.abs(currentY - dragStart.y))
+        })
+        .on("mouseup.scatterplotZoom", (upEvent) => {
+          if (!dragStart) return
+
+          const [upX, upY] = d3.pointer(upEvent, svg.node())
+          const endX = clamp(upX - margin.left, 0, plotWidth)
+          const endY = clamp(upY - margin.top, 0, plotHeight)
+          const x0 = Math.min(dragStart.x, endX)
+          const x1 = Math.max(dragStart.x, endX)
+          const y0 = Math.min(dragStart.y, endY)
+          const y1 = Math.max(dragStart.y, endY)
+
+          dragStart = null
+          zoomRect.style("display", "none")
+          d3.select(window).on("mousemove.scatterplotZoom", null).on("mouseup.scatterplotZoom", null)
+
+          if (Math.abs(x1 - x0) < 5 || Math.abs(y1 - y0) < 5) return
+
+          zoomState = {
+            dataRef: data,
+            xDomain: [xScale.invert(x0), xScale.invert(x1)],
+            yDomain: [yScale.invert(y1), yScale.invert(y0)],
+          }
+          draw_scatterplot(data)
+        })
+    })
+
+  svg.on("dblclick.scatterplotZoom", () => {
+    if (!zoomState.xDomain && !zoomState.yDomain) return
+
+    zoomState = {
+      dataRef: data,
+      xDomain: null,
+      yDomain: null,
+    }
+    tooltip.style("display", "none")
+    draw_scatterplot(data)
+  })
 }

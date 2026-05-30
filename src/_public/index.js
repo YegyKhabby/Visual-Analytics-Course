@@ -132,6 +132,17 @@ const rankTrack = document.getElementById("rank_track")
 const rankTopLabel = document.getElementById("rank_top_label")
 const rankHighLabel = document.getElementById("rank_high_label")
 const rankLowerHint = document.getElementById("rank_lower_hint")
+let ldaActive = false
+
+function requestLdaData() {
+  let rankLow = document.getElementById("rank_low").value
+  let rankHigh = document.getElementById("rank_high").value
+  requestData({ mode: "lda", rankLow, rankHigh })
+}
+
+function refreshLdaIfActive() {
+  if (ldaActive) requestLdaData()
+}
 
 // updates track gradient, labels, z-index — does NOT touch the text inputs
 function updateRankTrackOnly(lo, hi) {
@@ -160,6 +171,7 @@ rankLowRange.addEventListener("input", () => {
     rankLowRange.value = parseInt(rankHighRange.value) - 1
   }
   updateRankSlider()
+  refreshLdaIfActive()
 })
 
 rankHighRange.addEventListener("input", () => {
@@ -167,6 +179,7 @@ rankHighRange.addEventListener("input", () => {
     rankHighRange.value = parseInt(rankLowRange.value) + 1
   }
   updateRankSlider()
+  refreshLdaIfActive()
 })
 
 // when user types — only move the slider, never overwrite the field being typed in
@@ -176,6 +189,7 @@ rankLowInput.addEventListener("input", () => {
     v = Math.max(RANK_MIN, Math.min(v, parseInt(rankHighInput.value) - 1))
     rankLowRange.value = v
     updateRankTrackOnly(v, parseInt(rankHighRange.value))
+    refreshLdaIfActive()
   }
 })
 
@@ -185,6 +199,7 @@ rankHighInput.addEventListener("input", () => {
     v = Math.min(RANK_MAX, Math.max(v, parseInt(rankLowInput.value) + 1))
     rankHighRange.value = v
     updateRankTrackOnly(parseInt(rankLowRange.value), v)
+    refreshLdaIfActive()
   }
 })
 
@@ -217,13 +232,13 @@ let requestData = (parameters) => {
  * Assigning the callback to request the data on click.
  */
 document.getElementById("load_data_button").onclick = () => {
+  ldaActive = false
   requestData({})
 }
 
 document.getElementById("load_lda_button").onclick = () => {
-  let rankLow = document.getElementById("rank_low").value
-  let rankHigh = document.getElementById("rank_high").value
-  requestData({ mode: "lda", rankLow, rankHigh })
+  ldaActive = true
+  requestLdaData()
 }
 
 /**
