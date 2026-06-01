@@ -51,7 +51,10 @@ socket.on("initData", (payload) => {
     YEAR_MAX = payload.yearMax
     // re-apply the active preset now that we know the real data range
     const activeBtn = document.querySelector(".year-preset-btn.active")
-    if (activeBtn) activatePreset(activeBtn)
+    if (activeBtn) {
+      activatePreset(activeBtn)
+      updateFilterSummaryFromDom()
+    }
   }
 })
 
@@ -91,10 +94,12 @@ const clearCheckboxGroup = (listElementId, checkboxClass, searchInputId) => {
 
 document.getElementById("categories_clear_all").addEventListener("click", () => {
   clearCheckboxGroup("categories_list", "categories_list_checkbox", "categories_search")
+  updateFilterSummaryFromDom()
 })
 
 document.getElementById("mechanics_clear_all").addEventListener("click", () => {
   clearCheckboxGroup("mechanics_list", "mechanics_list_checkbox", "mechanics_search")
+  updateFilterSummaryFromDom()
 })
 
 // year range filter — preset buttons
@@ -103,6 +108,42 @@ const yearMinInput = document.getElementById("year_min_input")
 const yearMaxInput = document.getElementById("year_max_input")
 const yearCustomRow = document.getElementById("year_custom_row")
 const yearPresetBtns = document.querySelectorAll(".year-preset-btn")
+const selectedCategoriesCountEl = document.getElementById("selected_categories_count")
+const selectedMechanicsCountEl = document.getElementById("selected_mechanics_count")
+const activeYearRangeEl = document.getElementById("active_year_range")
+const filteredGamesCountEl = document.getElementById("filtered_games_count")
+
+const getFilterState = () => {
+  const selectedCategories = Array.from(document.querySelectorAll(".categories_list_checkbox:checked")).map(cb => cb.value)
+  const selectedMechanics = Array.from(document.querySelectorAll(".mechanics_list_checkbox:checked")).map(cb => cb.value)
+  return {
+    selectedCategories,
+    selectedMechanics,
+    yearMin: yearMinInput.value,
+    yearMax: yearMaxInput.value,
+  }
+}
+
+const updateFilterSummary = ({ selectedCategories, selectedMechanics, yearMin, yearMax, filteredCount } = {}) => {
+  if (selectedCategories !== undefined) {
+    selectedCategoriesCountEl.textContent = selectedCategories.length === 0
+      ? "All categories"
+      : `${selectedCategories.length} categories`
+  }
+  if (selectedMechanics !== undefined) {
+    selectedMechanicsCountEl.textContent = selectedMechanics.length === 0
+      ? "All mechanics"
+      : `${selectedMechanics.length} mechanics`
+  }
+  if (yearMin !== undefined && yearMax !== undefined) {
+    activeYearRangeEl.textContent = `${yearMin}–${yearMax}`
+  }
+  if (filteredCount !== undefined) {
+    filteredGamesCountEl.textContent = filteredCount
+  }
+}
+
+const updateFilterSummaryFromDom = () => updateFilterSummary(getFilterState())
 
 function activatePreset(btn) {
   yearPresetBtns.forEach(b => b.classList.remove("active"))
@@ -117,10 +158,14 @@ function activatePreset(btn) {
   }
 }
 
-yearPresetBtns.forEach(btn => btn.addEventListener("click", () => activatePreset(btn)))
+yearPresetBtns.forEach(btn => btn.addEventListener("click", () => {
+  activatePreset(btn)
+  updateFilterSummaryFromDom()
+}))
 
 // default: All
 activatePreset(yearPresetBtns[0])
+updateFilterSummaryFromDom()
 
 // rank range slider
 const RANK_MIN = 1, RANK_MAX = 99
@@ -205,6 +250,17 @@ rankHighInput.addEventListener("input", () => {
 
 updateRankSlider()
 
+const categoriesListEl = document.getElementById("categories_list")
+const mechanicsListEl = document.getElementById("mechanics_list")
+if (categoriesListEl) {
+  categoriesListEl.addEventListener("change", updateFilterSummaryFromDom)
+}
+if (mechanicsListEl) {
+  mechanicsListEl.addEventListener("change", updateFilterSummaryFromDom)
+}
+yearMinInput.addEventListener("input", updateFilterSummaryFromDom)
+yearMaxInput.addEventListener("input", updateFilterSummaryFromDom)
+
 /**
  * Callback, when the button is pressed to request the data from the server.
  * @param {*} parameters
@@ -212,10 +268,8 @@ updateRankSlider()
 let requestData = (parameters) => {
   console.log(`requesting data from webserver`)
 
-  const selectedCategories = Array.from(document.querySelectorAll(".categories_list_checkbox:checked")).map(cb => cb.value)
-  const selectedMechanics = Array.from(document.querySelectorAll(".mechanics_list_checkbox:checked")).map(cb => cb.value)
-  const yearMin = document.getElementById("year_min_input").value
-  const yearMax = document.getElementById("year_max_input").value
+    const { selectedCategories, selectedMechanics, yearMin, yearMax } = getFilterState()
+  updateFilterSummary({ selectedCategories, selectedMechanics, yearMin, yearMax })
 
   socket.emit("getData", {
     parameters: {
@@ -260,10 +314,11 @@ let handleData = (payload) => {
   if (payload.parameters && payload.parameters.mode === "lda") {
     document.getElementById("title").textContent = "LDA 1 vs LDA 2"
   } else {
-    document.getElementById("title").textContent = "Playtime vs Rating (sized by Reviews)"
+    document.getElementById("title").textContent = "Playtime vs Rating (sized by # of reviews)"
   }
 
   draw_scatterplot(data.scatterplot)
+  updateFilterSummary({ filteredCount: data.scatterplot.length })
 }
 
 socket.on("freshData", handleData)

@@ -40,7 +40,7 @@ head,
 }
 
 #categories_list, #mechanics_list {
-  max-height: 200px;
+  max-height: 150px;
   overflow-y: auto;
   border: 1px solid #c6d3dd;
   background: white;
@@ -74,7 +74,7 @@ details {
 
 .section_divider {
   border: none;
-  border-top: 1px solid #c6d3dd;
+  border-top: 3px solid #284b63;
   margin: 15px 0;
 }
 

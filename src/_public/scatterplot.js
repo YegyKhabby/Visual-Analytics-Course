@@ -73,10 +73,12 @@ export function draw_scatterplot(data) {
     .range([0, plotWidth])
 
   /**
-   * Scale unction for the y-axis
+   * Scale function for the y-axis
    */
-  const fullYDomain = d3.extent(data.map((d) => isLdaData ? d.lda2 : d.rating))
-  if (fullYDomain[0] === fullYDomain[1]) { fullYDomain[0] -= 0.5; fullYDomain[1] += 0.5 }
+  let fullYDomain = isLdaData
+    ? d3.extent(data.map((d) => d.lda2))
+    : [7.5, 9]
+  if (isLdaData && fullYDomain[0] === fullYDomain[1]) { fullYDomain[0] -= 0.5; fullYDomain[1] += 0.5 }
   const yScale = d3
     .scaleLinear()
     .domain(fullYDomain)
