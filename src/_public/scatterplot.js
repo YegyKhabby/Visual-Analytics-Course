@@ -117,7 +117,10 @@ export function draw_scatterplot(data) {
     .attr("fill-opacity", isLdaData ? 0.85 : 0.7)
     .attr("stroke", "black")
     .attr("stroke-width", 1.5)
-    .attr("r", (d) => isLdaData ? 5 : rScale(d.num_of_reviews))
+    .attr("r", (d) => {
+      const uniform = document.getElementById("uniform_size_toggle")?.checked
+      return uniform ? 4 : (isLdaData ? 5 : rScale(d.num_of_reviews))
+    })
     .attr("cx", (d) => margin.left + xScale(isLdaData ? d.lda1 : d.maxplaytime))
     .attr("cy", (d) => yScale(isLdaData ? d.lda2 : d.rating) + margin.top)
     .on("mouseover", (event, d) => {

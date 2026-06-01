@@ -83,6 +83,77 @@ summary {
   color: #284b63;
 }
 
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0 6px 0;
+}
+
+.toggle-label-text {
+  font-size: 0.85em;
+  color: #1f2d36;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #c6d3dd;
+  border-radius: 20px;
+  transition: background-color 0.2s;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #284b63;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+}
+
+.panel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.panel-header-row .panel-header {
+  margin: 0;
+}
+
+.button-sm {
+  font-size: 0.5em;
+  padding: 4px 8px;
+}
+
 .visualizations {
   grid-area: visualizations;
   background: white;
@@ -119,10 +190,10 @@ summary {
 }
 
 .clear-all-btn {
-    width: 40%;
+    width: 45%;
     border-radius: 20px;
     height: 25px;
-    font-size: 0.85em;
+    font-size: 0.7em;
     font-weight: bold;
     background: white;
     border: 2px solid #284b63;

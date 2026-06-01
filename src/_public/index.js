@@ -108,10 +108,6 @@ const yearMinInput = document.getElementById("year_min_input")
 const yearMaxInput = document.getElementById("year_max_input")
 const yearCustomRow = document.getElementById("year_custom_row")
 const yearPresetBtns = document.querySelectorAll(".year-preset-btn")
-const selectedCategoriesCountEl = document.getElementById("selected_categories_count")
-const selectedMechanicsCountEl = document.getElementById("selected_mechanics_count")
-const activeYearRangeEl = document.getElementById("active_year_range")
-const filteredGamesCountEl = document.getElementById("filtered_games_count")
 
 const getFilterState = () => {
   const selectedCategories = Array.from(document.querySelectorAll(".categories_list_checkbox:checked")).map(cb => cb.value)
@@ -125,22 +121,7 @@ const getFilterState = () => {
 }
 
 const updateFilterSummary = ({ selectedCategories, selectedMechanics, yearMin, yearMax, filteredCount } = {}) => {
-  if (selectedCategories !== undefined) {
-    selectedCategoriesCountEl.textContent = selectedCategories.length === 0
-      ? "All categories"
-      : `${selectedCategories.length} categories`
-  }
-  if (selectedMechanics !== undefined) {
-    selectedMechanicsCountEl.textContent = selectedMechanics.length === 0
-      ? "All mechanics"
-      : `${selectedMechanics.length} mechanics`
-  }
-  if (yearMin !== undefined && yearMax !== undefined) {
-    activeYearRangeEl.textContent = `${yearMin}–${yearMax}`
-  }
-  if (filteredCount !== undefined) {
-    filteredGamesCountEl.textContent = filteredCount
-  }
+  // Filter summary elements removed as per merge-check version
 }
 
 const updateFilterSummaryFromDom = () => updateFilterSummary(getFilterState())
@@ -288,6 +269,21 @@ let requestData = (parameters) => {
 document.getElementById("load_data_button").onclick = () => {
   ldaActive = false
   requestData({})
+}
+
+document.getElementById("uniform_size_toggle").addEventListener("change", () => {
+  if (data.scatterplot) draw_scatterplot(data.scatterplot)
+})
+
+document.getElementById("reset_filters_button").onclick = () => {
+  document.querySelectorAll(".categories_list_checkbox, .mechanics_list_checkbox").forEach(cb => cb.checked = false)
+  const categoriesSearch = document.getElementById("categories_search")
+  const mechanicsSearch = document.getElementById("mechanics_search")
+  categoriesSearch.value = ""
+  mechanicsSearch.value = ""
+  categoriesSearch.dispatchEvent(new Event("input"))
+  mechanicsSearch.dispatchEvent(new Event("input"))
+  activatePreset(yearPresetBtns[0])
 }
 
 document.getElementById("load_lda_button").onclick = () => {

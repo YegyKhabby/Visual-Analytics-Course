@@ -10,7 +10,10 @@
     <div class="root" id="root">
       <div class="banner" id="title">Board Game Analytics</div>
       <div class="sidepanel">
-        <h3 class="panel-header">Data Filters</h3>
+        <div class="panel-header-row">
+          <h3 class="panel-header">Data Filters</h3>
+          <button id="reset_filters_button" class="clear-all-btn button-sm">Reset Filters</button>
+        </div>
         <details id="categories_details">
           <summary>Categories</summary>
           <input type="text" id="categories_search" placeholder="Search categories..." />
@@ -24,9 +27,8 @@
           <button id="mechanics_clear_all" class="clear-all-btn">Clear All</button>
           <div id="mechanics_list"></div>
         </details>
-        <p><strong>Selected filter:</strong> <span id="selected_categories_count">all categories</span>, <span id="selected_mechanics_count">all mechanics</span></p>
 
-        <label style="display:block; margin-top:15px"><strong>Year range:</strong> <span id="active_year_range">1876–2021</span></label>
+        <label style="display:block; margin-top:15px">Year range:</label>
         <div class="year-presets">
           <button class="year-preset-btn" data-min="all">All</button>
           <button class="year-preset-btn" data-min="2000">2000+</button>
@@ -44,8 +46,12 @@
           </div>
         </div>
 
-        <div class="filter-status">
-          <p><strong>Games shown:</strong> <span id="filtered_games_count">0</span></p>
+        <div class="toggle-row">
+          <label for="uniform_size_toggle" class="toggle-label-text">Uniform circle size</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="uniform_size_toggle" />
+            <span class="toggle-slider"></span>
+          </label>
         </div>
 
         <button id="load_data_button" class="button">Load data</button>
