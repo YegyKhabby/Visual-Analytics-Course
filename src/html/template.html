@@ -28,7 +28,9 @@
           <div id="mechanics_list"></div>
         </details>
 
-        <label style="display:block; margin-top:15px">Year range:</label>
+        <p><strong>Selected filter:</strong> <span id="selected_categories_count">All categories</span>, <span id="selected_mechanics_count">All mechanics</span></p>
+
+        <label style="display:block; margin-top:15px"><strong>Year range:</strong> <span id="active_year_range">1876–2021</span></label>
         <div class="year-presets">
           <button class="year-preset-btn" data-min="all">All</button>
           <button class="year-preset-btn" data-min="2000">2000+</button>
@@ -52,6 +54,10 @@
             <input type="checkbox" id="uniform_size_toggle" />
             <span class="toggle-slider"></span>
           </label>
+        </div>
+
+        <div class="filter-status">
+          <p><strong>Games shown:</strong> <span id="filtered_games_count">0</span></p>
         </div>
 
         <button id="load_data_button" class="button">Load data</button>

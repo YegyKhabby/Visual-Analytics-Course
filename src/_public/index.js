@@ -109,6 +109,11 @@ const yearMaxInput = document.getElementById("year_max_input")
 const yearCustomRow = document.getElementById("year_custom_row")
 const yearPresetBtns = document.querySelectorAll(".year-preset-btn")
 
+const selectedCategoriesCountEl = document.getElementById("selected_categories_count")
+const selectedMechanicsCountEl = document.getElementById("selected_mechanics_count")
+const activeYearRangeEl = document.getElementById("active_year_range")
+const filteredGamesCountEl = document.getElementById("filtered_games_count")
+
 const getFilterState = () => {
   const selectedCategories = Array.from(document.querySelectorAll(".categories_list_checkbox:checked")).map(cb => cb.value)
   const selectedMechanics = Array.from(document.querySelectorAll(".mechanics_list_checkbox:checked")).map(cb => cb.value)
@@ -121,7 +126,18 @@ const getFilterState = () => {
 }
 
 const updateFilterSummary = ({ selectedCategories, selectedMechanics, yearMin, yearMax, filteredCount } = {}) => {
-  // Filter summary elements removed as per merge-check version
+  if (selectedCategories !== undefined && selectedCategoriesCountEl) {
+    selectedCategoriesCountEl.textContent = selectedCategories.length === 0 ? "All categories" : `${selectedCategories.length} categories`
+  }
+  if (selectedMechanics !== undefined && selectedMechanicsCountEl) {
+    selectedMechanicsCountEl.textContent = selectedMechanics.length === 0 ? "All mechanics" : `${selectedMechanics.length} mechanics`
+  }
+  if (yearMin !== undefined && yearMax !== undefined && activeYearRangeEl) {
+    activeYearRangeEl.textContent = `${yearMin}–${yearMax}`
+  }
+  if (filteredCount !== undefined && filteredGamesCountEl) {
+    filteredGamesCountEl.textContent = filteredCount
+  }
 }
 
 const updateFilterSummaryFromDom = () => updateFilterSummary(getFilterState())

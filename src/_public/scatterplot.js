@@ -77,7 +77,7 @@ export function draw_scatterplot(data) {
    */
   let fullYDomain = isLdaData
     ? d3.extent(data.map((d) => d.lda2))
-    : [7.5, 9]
+    : [1, 10]
   if (isLdaData && fullYDomain[0] === fullYDomain[1]) { fullYDomain[0] -= 0.5; fullYDomain[1] += 0.5 }
   const yScale = d3
     .scaleLinear()
