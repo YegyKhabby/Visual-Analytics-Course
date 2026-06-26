@@ -217,7 +217,8 @@ export function draw_scatterplot(data) {
   // legend
   g_scatterplot.selectAll(".legend_item").remove()
 
-  if (!isLdaData) {
+  const uniformSize = document.getElementById("uniform_size_toggle")?.checked
+  if (!isLdaData && !uniformSize) {
     const reviewExtent = d3.extent(data.map((d) => d.num_of_reviews || 0))
     const midReviews = Math.round((reviewExtent[0] + reviewExtent[1]) / 2)
     const sizeLegendData = [

@@ -59,7 +59,7 @@ head,
 }
 
 .panel-header {
-  margin: 0 0 10px 0;
+  margin: 0;
   font-size: 0.95em;
   font-weight: bold;
   color: #284b63;
@@ -206,6 +206,14 @@ summary {
     border-color: #f2a93b;
 }
 
+.button.button-sm {
+  width: 100px;
+  height: 20px;
+  padding: 0 7px;
+  font-size: 0.6em;
+  border-radius: 10px;
+}
+
 #tooltip {
   position: absolute;
   background: white;
@@ -279,6 +287,7 @@ input[type=text], select {
   width: 18px;
   height: 18px;
   border-radius: 50%;
+  margin-top: -9px;
   pointer-events: auto;
   cursor: pointer;
   border: 2px solid white;
@@ -359,43 +368,35 @@ input[type=text], select {
   box-sizing: border-box;
 }
 
-/* compact two-column layout for rank cutoff inputs */
+/* rank cutoff grid: labels top row, inputs bottom row, interleaved */
 .rank-cutoff-row {
-  display: flex;
-  gap: 8px;
-  margin: 4px 0 4px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "top  .    mid  .    low"
+    ".    rlo  .    rhi  .  ";
+  column-gap: 8px;
+  row-gap: 2px;
+  margin: 4px 0;
 }
 
-.rank-cutoff-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
+#rank_top_label  { grid-area: top; color: #2f80ed; }
+#rank_high_label { grid-area: mid; color: #f2a93b; }
+#rank_low_hint   { grid-area: low; color: #c0392b; }
+#rank_low        { grid-area: rlo; }
+#rank_high       { grid-area: rhi; }
 
 .rank-col-label {
   font-size: 0.78em;
   color: #555;
-  margin-bottom: 2px;
   display: block;
   text-align: center;
 }
 
-.rank-cutoff-col input[type=text] {
-  width: 100%;
+.rank-cutoff-row input[type=text] {
   padding: 4px 6px;
   margin: 0;
   text-align: center;
   font-size: 0.9em;
-  box-sizing: border-box;
-}
-
-.rank-lower-col {
-  justify-content: center;
-  align-items: center;
-}
-
-.rank-lower-hint {
-  font-size: 0.85em;
-  color: #c0392b;
-  text-align: center;
 }
