@@ -1,29 +1,8 @@
-# Code Change Q&A Rule
+# LLM Chat Log — JavaScript / D3 Questions
 
-For every code task:
+---
 
-1. Make the smallest code change possible.
-2. Before changing code, write a generic coding question.
-3. Answer the question with the exact new code that will be used.
-4. Show the original code block and the new code block.
-5. Include only code that is different from the original template.
-6. Do not include project-specific details in the question.
-7. Do not document unchanged code.
-
-## Current Changes
-
-### Q1: How do I add a small preprocessing function for nested data?
-
-Answer:
-Use `map()` to create a simpler object with only the fields needed by the visualization.
-
-Original:
-
-```js
-// No equivalent function in the original template.
-```
-
-New:
+**You:** I have this JavaScript function that maps over an array of game objects and returns a flat object for each one:
 
 ```js
 export function preprocess_boardgames(games) {
@@ -37,12 +16,26 @@ export function preprocess_boardgames(games) {
 }
 ```
 
-### Q2: How do I change imports when switching from CSV parsing to JSON file reading?
+I also need to include the number of reviews, which is stored as `game.rating.num_of_reviews`. How do I add that field?
 
-Answer:
-Keep the existing file-system import, remove the CSV parser import, and import the preprocessing helper.
+**Assistant:** Just add one more property to the returned object. Since `num_of_reviews` is nested inside `game.rating`, you access it the same way as `rating` — with dot notation:
 
-Original:
+```js
+export function preprocess_boardgames(games) {
+  return games.map((game) => {
+    return {
+      title: game.title,
+      maxplaytime: game.maxplaytime,
+      rating: game.rating.rating,
+      num_of_reviews: game.rating.num_of_reviews,
+    }
+  })
+}
+```
+
+---
+
+**You:** I have a Node.js server file with these imports at the top:
 
 ```js
 //import * as csv from "csv-parser"
@@ -54,7 +47,9 @@ import { is_below_max_weight, parse_numbers, calc_bmi } from "./preprocessing.js
 import { getExampleLDA } from "./druidExample.js";
 ```
 
-New:
+I no longer use the CSV parser or the BMI helpers. I now only load JSON. How do I clean up these imports?
+
+**Assistant:** Remove all the CSV-related imports and the helpers that were only used for CSV processing. Keep `fs`, the utility functions, and update the preprocessing import to the function you still use:
 
 ```js
 import * as fs from "fs"
@@ -62,70 +57,48 @@ import { print_clientConnected, print_clientDisconnected } from "./static/utils.
 import { preprocess_boardgames } from "./preprocessing.js"
 ```
 
-### Q3: How do I point a server-side loader to a JSON file instead of another data file?
+---
 
-Answer:
-Change the file name constant to the JSON file name.
+**You:** I have a constant at the top of my Node.js file that stores a filename. I want to change which file the server loads. Is it enough to just update that string?
 
-Original:
-
-```js
-const file_path = "data/"
-const file_name = "example_data.csv"
-```
-
-New:
+**Assistant:** Yes. If the filename is read from a single constant, changing just the string is enough. All file operations use that constant, so they automatically point to the new file.
 
 ```js
 const file_path = "data/"
 const file_name = "boardgames_100.json"
 ```
 
-### Q4: How do I read and parse a local JSON file with an existing `fs` import?
+---
 
-Answer:
-Use `fs.readFile`, parse the file content with `JSON.parse`, preprocess the parsed data, and emit the processed array.
-
-Original:
+**You:** My Node.js server currently reads a CSV file using `createReadStream`. Here is the relevant part:
 
 ```js
 socket.on("getData", (obj) => {
-  console.log(`Data request with properties ${JSON.stringify(obj)}...`)
-
-  getExampleLDA(); //Example how to use druidjs. Just prints to the console for now
-
-
   let parameters = obj.parameters
-
   let jsonArray = []
 
-  // This is reading the .csv file line by line
-  // So we can filter it line by line
-  // This saves a lot of RAM and processing time
   fs.createReadStream(file_path + file_name)
     .pipe(parse({ delimiter: ',', columns: true }))
     .on('data', function (row) {
       row = parse_numbers(row)
       row = calc_bmi(row)
-      // Filtering the data according the given parameter
-      // If it fits the parameter, add it to the result-array
-      let row_meets_criteria = is_below_max_weight(parameters, row)
-      if (row_meets_criteria) {
+      if (is_below_max_weight(parameters, row)) {
         jsonArray.push(row)
       }
     })
-    .on("end", () => { //when all data is ready and processed, send it to the frontend of the socket
+    .on("end", () => {
       socket.emit("freshData", {
         timestamp: new Date().getTime(),
         data: jsonArray,
         parameters: parameters,
       })
     })
-  console.log(`freshData emitted`)
 })
 ```
 
-New:
+I now have a JSON file and want to load it all at once instead. How do I rewrite this?
+
+**Assistant:** Replace the stream with `fs.readFile`. It reads the whole file as a string, then you call `JSON.parse()` to convert it to a JavaScript array. Here is the rewritten version:
 
 ```js
 socket.on("getData", (obj) => {
@@ -152,39 +125,23 @@ socket.on("getData", (obj) => {
 })
 ```
 
-### Q5: How do I remove an unused chart import after simplifying a frontend data handler?
+The callback receives `error` (null if everything is fine) and `fileContent` (the raw string). Always check the error before proceeding.
 
-Answer:
-Remove the unused chart import and keep only the drawing function still called by the file.
+---
 
-Original:
+**You:** I have two import lines at the top of a JavaScript file but one of the modules is no longer used. Do I just delete the line?
 
-```js
-import {draw_barchart} from "./barchart.js"
-import {draw_scatterplot} from "./scatterplot.js"
-```
-
-New:
+**Assistant:** Yes. Unused imports do not cause errors but are unnecessary. Just delete the import line for the module you removed:
 
 ```js
 import {draw_scatterplot} from "./scatterplot.js"
 ```
 
-### Q6: How do I simplify a frontend data object when only one chart is being drawn?
+---
 
-Answer:
-Keep only the stored data property that is still used.
+**You:** I have a JavaScript object that stores data for two charts but I only use one now. Can I just remove the unused property?
 
-Original:
-
-```js
-let data = {
-  barchart: undefined,
-  scatterplot: undefined,
-}
-```
-
-New:
+**Assistant:** Yes. JavaScript object literals are flexible — you can remove any property that nothing else references:
 
 ```js
 let data = {
@@ -192,20 +149,14 @@ let data = {
 }
 ```
 
-### Q7: How do I pass received data directly to a single D3 drawing function?
+---
 
-Answer:
-Store the received array and call the drawing function with it.
-
-Original:
+**You:** I have this data handler function that calculates BMI values and calls two chart functions:
 
 ```js
 let handleData = (payload) => {
   console.log(`Fresh data from Webserver:`)
   console.log(payload)
-  // Parse the data into the needed format for the d3 visualizations (if necessary)
-  // Here, the barchart shows two bars
-  // So the data is preprocessed accordingly
 
   let count_too_much_weight = 0
   let count_good_weight = 0
@@ -225,7 +176,9 @@ let handleData = (payload) => {
 }
 ```
 
-New:
+I want to simplify it so it just stores the received data and calls only `draw_scatterplot`. How do I rewrite it?
+
+**Assistant:** Remove all the intermediate calculations and the barchart call. Store the data array directly and call the one function you still need:
 
 ```js
 let handleData = (payload) => {
@@ -236,31 +189,19 @@ let handleData = (payload) => {
 }
 ```
 
-### Q8: How do I update a console message after changing what a chart draws?
+---
 
-Answer:
-Change only the message string and keep the data log.
+**You:** How do I change the text inside a `console.log()` call in JavaScript?
 
-Original:
-
-```js
-console.log("draw scatterplot")
-console.log(data)
-```
-
-New:
+**Assistant:** Just edit the string literal directly — nothing else needs to change:
 
 ```js
 console.log("draw board-game scatterplot")
-console.log(data)
 ```
 
-### Q9: How do I change the x-axis field in a D3 scatterplot?
+---
 
-Answer:
-Change the field used in the x-scale domain.
-
-Original:
+**You:** I have this D3 x-axis scale in my scatterplot:
 
 ```js
 const xScale = d3
@@ -269,7 +210,9 @@ const xScale = d3
   .range([0, width - margin.left - margin.right])
 ```
 
-New:
+I want to change it to use `d.maxplaytime` instead of `d.weight`. Do I just replace the field name?
+
+**Assistant:** Yes, just replace the field name in the `.domain()` calculation. Everything else stays the same:
 
 ```js
 const xScale = d3
@@ -278,12 +221,9 @@ const xScale = d3
   .range([0, width - margin.left - margin.right])
 ```
 
-### Q10: How do I change the y-axis field when the values are in a narrow numeric range?
+---
 
-Answer:
-Use `d3.extent()` so the axis covers the actual minimum and maximum values.
-
-Original:
+**You:** I have this D3 y-axis scale:
 
 ```js
 const yScale = d3
@@ -292,7 +232,9 @@ const yScale = d3
   .range([height - margin.top - margin.bottom, 0])
 ```
 
-New:
+My data values are all between 6 and 9, so the chart only uses a tiny band near the top. How do I make the axis span the actual data range instead of starting from zero?
+
+**Assistant:** Use `d3.extent()` instead of `[0, max]` as the domain. It returns `[min, max]` of your actual data, so the axis stretches exactly from the lowest to the highest value:
 
 ```js
 const yScale = d3
@@ -301,12 +243,9 @@ const yScale = d3
   .range([height - margin.top - margin.bottom, 0])
 ```
 
-### Q11: How do I update circle positions in a D3 scatterplot after changing x and y fields?
+---
 
-Answer:
-Keep the same circle style and only change the fields used for `cx` and `cy`.
-
-Original:
+**You:** I updated the x and y scales to use new field names. Now I need to update the circle positions too. They currently look like this:
 
 ```js
 .attr("fill", "orange")
@@ -315,7 +254,9 @@ Original:
 .attr("cy", (d) => yScale(d.height) + margin.top)
 ```
 
-New:
+How do I update them to use `d.maxplaytime` and `d.rating`?
+
+**Assistant:** Just replace the field names inside the `cx` and `cy` arrow functions. The scale calls and margin offsets stay the same:
 
 ```js
 .attr("fill", "orange")
@@ -324,70 +265,59 @@ New:
 .attr("cy", (d) => yScale(d.rating) + margin.top)
 ```
 
-### Q12: How do I update axis label text after changing data fields?
+---
 
-Answer:
-Change only the text values bound to the label elements.
-
-Original:
+**You:** I have these two axis label lines in my D3 scatterplot:
 
 ```js
 let x_label = g_scatterplot.selectAll(".x_label").data(["Weight (kg)"])
 ```
 
-New:
+```js
+let y_label = g_scatterplot.selectAll(".y_label").data(["Height (cm)"])
+```
+
+How do I change the label text?
+
+**Assistant:** Change the string inside the `.data([...])` array. D3 binds it as the datum and uses it in the `.text((d) => d)` call to render the label:
 
 ```js
 let x_label = g_scatterplot.selectAll(".x_label").data(["Maximum playtime (minutes)"])
 ```
 
-Original:
-
-```js
-let y_label = g_scatterplot.selectAll(".y_label").data(["Height (cm)"])
-```
-
-New:
-
 ```js
 let y_label = g_scatterplot.selectAll(".y_label").data(["Rating"])
 ```
 
-### Q13: How do I update static page text after adapting a template?
+---
 
-Answer:
-Change only the visible text strings and keep the page structure the same.
-
-Original:
+**You:** I have an HTML template with these elements:
 
 ```html
 <title>BAREBONE</title>
 ```
 
-New:
+```html
+<div class="banner">Dashboard Template VISVA</div>
+```
+
+How do I change the browser tab title and the banner text?
+
+**Assistant:** Edit the text content directly inside both elements:
 
 ```html
 <title>Visualization Dashboard</title>
 ```
 
-Original:
-
-```html
-<div class="banner">Dashboard Template VISVA</div>
-```
-
-New:
-
 ```html
 <div class="banner">Visualization Dashboard</div>
 ```
 
-### Q14: How do I simplify a button click when no input parameter is needed?
+The `<title>` controls the browser tab and the `<div>` controls the visible heading on the page — they are independent.
 
-Answer:
-Call the request function with an empty object and remove the unused input-reading code.
+---
 
-Original:
+**You:** My button click handler currently looks like this:
 
 ```js
 document.getElementById("load_data_button").onclick = () => {
@@ -401,7 +331,9 @@ document.getElementById("load_data_button").onclick = () => {
 }
 ```
 
-New:
+I no longer need the filter. How do I simplify it so it just sends a request with no parameters?
+
+**Assistant:** Remove all the input-reading and parsing logic. Call your request function with an empty object:
 
 ```js
 document.getElementById("load_data_button").onclick = () => {
@@ -409,12 +341,9 @@ document.getElementById("load_data_button").onclick = () => {
 }
 ```
 
-### Q15: How do I remove an unused input control from a template page?
+---
 
-Answer:
-Remove the label and input elements, keeping the existing button for loading data.
-
-Original:
+**You:** I have this HTML in my side panel:
 
 ```html
 <label for="max_weight">Filter for weight below ___ kg</label>
@@ -428,18 +357,19 @@ Original:
 <button id="load_data_button" class="button">Load data</button>
 ```
 
-New:
+I no longer need the label and input. How do I remove them?
+
+**Assistant:** Delete the `<label>` and `<input>` elements. The button stays in place:
 
 ```html
 <button id="load_data_button" class="button">Load data</button>
 ```
 
-### Q16: How do I remove an unused SVG chart container from a template page?
+Before deleting, check that nothing in your JavaScript reads the input's `id` — if it does, remove that code too.
 
-Answer:
-Remove the unused chart container and keep the SVG container that is still drawn by the code.
+---
 
-Original:
+**You:** My HTML page has these two chart containers:
 
 ```html
 <div class="barchart">
@@ -458,7 +388,9 @@ Original:
 </div>
 ```
 
-New:
+I only use the scatterplot now. How do I remove the barchart container?
+
+**Assistant:** Delete the entire `<div class="barchart">` block. The scatterplot container has its own `id` and class so it is completely independent:
 
 ```html
 <div class="scatterplot">
@@ -470,12 +402,9 @@ New:
 </div>
 ```
 
-### Q17: How do I change a CSS grid from two chart areas to one chart area?
+---
 
-Answer:
-Change the grid to a single column and keep only the grid area that is still used.
-
-Original:
+**You:** My CSS grid currently has two chart areas side by side:
 
 ```css
 .visualizations {
@@ -496,12 +425,28 @@ Original:
 }
 ```
 
-### Q18: How do I make an SVG chart area readable when the surrounding container has no visible background?
+I removed the barchart. How do I update the CSS to use only one column?
 
-Answer:
-Add a light background color to the chart container.
+**Assistant:** Change `grid-template-columns` to `auto`, update `grid-template-areas` to only name the one remaining area, and remove the `.barchart` rule:
 
-Original:
+```css
+.visualizations {
+  grid-area: visualizations;
+
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto;
+  grid-template-areas: "scatterplot";
+}
+
+.scatterplot {
+  grid-area: scatterplot;
+}
+```
+
+---
+
+**You:** My visualization container currently looks like this in CSS:
 
 ```css
 .visualizations {
@@ -514,7 +459,9 @@ Original:
 }
 ```
 
-New:
+The SVG chart area has no background and is hard to see. How do I add a white background?
+
+**Assistant:** Add `background: white;` to the `.visualizations` rule:
 
 ```css
 .visualizations {
@@ -528,12 +475,9 @@ New:
 }
 ```
 
-### Q19: How do I import an already-installed analysis library in a server-side JavaScript file?
+---
 
-Answer:
-Add the library import next to the existing imports.
-
-Original:
+**You:** There is a library called `@saehrimnir/druidjs` already installed in my project. My current imports are:
 
 ```js
 import * as fs from "fs"
@@ -541,7 +485,9 @@ import { print_clientConnected, print_clientDisconnected } from "./static/utils.
 import { preprocess_boardgames } from "./preprocessing.js"
 ```
 
-New:
+How do I add the druidjs import?
+
+**Assistant:** Add an `import * as` line for the library. Using `* as druid` makes everything it exports available under the `druid` namespace:
 
 ```js
 import * as fs from "fs"
@@ -550,18 +496,16 @@ import { print_clientConnected, print_clientDisconnected } from "./static/utils.
 import { preprocess_boardgames } from "./preprocessing.js"
 ```
 
-### Q20: How do I create grouped projection data from numeric records?
+---
 
-Answer:
-Create class labels from thresholds, normalize the numeric input fields, run the projection, and return the projection coordinates.
+**You:** I have an array of game objects. Each game has numeric fields like `year`, `minage`, `minplayers`, `maxplayers`, `minplaytime`, `maxplaytime`, and a `rank` field. I want to group them into three categories based on rank thresholds, then project them to 2D using LDA from the `druidjs` library. How do I write this function?
 
-Original:
+**Assistant:** Here is the full implementation step by step:
 
-```js
-// No equivalent function in the original template.
-```
-
-New:
+1. Map each game to a flat object and assign a group label from rank thresholds.
+2. Normalize each numeric feature to `[0, 1]` using min-max scaling — LDA is sensitive to feature scale.
+3. Build a `druid.Matrix` from the normalized values.
+4. Run `new druid.LDA(X, { labels: classes, d: 2 }).transform()` and read `.to2dArray` for the 2D coordinates.
 
 ```js
 function calculateLdaProjection(rawGames, parameters) {
@@ -573,8 +517,6 @@ function calculateLdaProjection(rawGames, parameters) {
       title: game.title,
       rank: game.rank,
       year: game.year,
-      rating: game.rating.rating,
-      reviews: game.rating.num_of_reviews,
       minage: game.minage,
       minplayers: game.minplayers,
       maxplayers: game.maxplayers,
@@ -589,7 +531,7 @@ function calculateLdaProjection(rawGames, parameters) {
     }
   })
 
-  const featureNames = ["rating", "reviews", "year", "minage", "minplayers", "maxplayers", "minplaytime", "maxplaytime"]
+  const featureNames = ["year", "minage", "minplayers", "maxplayers", "minplaytime", "maxplaytime"]
   const ranges = {}
 
   for (const feature of featureNames) {
@@ -623,19 +565,20 @@ function calculateLdaProjection(rawGames, parameters) {
 }
 ```
 
-### Q21: How do I reuse an existing data request event for two processing modes?
+Important: do not include features that were used to define the group labels — that would make the separation circular.
 
-Answer:
-After parsing the file, choose the processed data based on a request parameter, then emit the same response event as before.
+---
 
-Original:
+**You:** I have this code in my server that always calls `preprocess_boardgames` after reading the file:
 
 ```js
 const rawGames = JSON.parse(fileContent)
 const games = preprocess_boardgames(rawGames)
 ```
 
-New:
+I now want it to call a different function `calculateLdaProjection` when `parameters.mode === "lda"`, and use the original otherwise. How do I add that condition?
+
+**Assistant:** Use a ternary expression to choose between the two functions based on the mode parameter:
 
 ```js
 const rawGames = JSON.parse(fileContent)
@@ -645,18 +588,11 @@ const games =
     : preprocess_boardgames(rawGames)
 ```
 
-### Q22: How do I add a small set of numeric controls to an existing side panel?
+---
 
-Answer:
-Add two text inputs and one button with stable IDs.
+**You:** I want to add two labeled text inputs and a second button to an existing HTML side panel. How do I structure that?
 
-Original:
-
-```html
-<button id="load_data_button" class="button">Load data</button>
-```
-
-New:
+**Assistant:** Add a `<label>` and `<input type="text">` pair for each field with unique `id` attributes, then add the new button:
 
 ```html
 <button id="load_data_button" class="button">Load data</button>
@@ -677,12 +613,9 @@ New:
 <button id="load_lda_button" class="button">Run LDA</button>
 ```
 
-### Q23: How do I send input values as parameters through an existing request function?
+---
 
-Answer:
-Read the input values and pass them in the parameter object.
-
-Original:
+**You:** I have this button handler in my JavaScript:
 
 ```js
 document.getElementById("load_data_button").onclick = () => {
@@ -690,7 +623,9 @@ document.getElementById("load_data_button").onclick = () => {
 }
 ```
 
-New:
+I added a second button with `id="load_lda_button"` and two inputs with `id="rank_low"` and `id="rank_high"`. How do I wire up the second button so it reads those inputs and passes them to `requestData`?
+
+**Assistant:** Add a second `onclick` handler for the new button. Read each input's `.value` and pass them in the parameters object:
 
 ```js
 document.getElementById("load_data_button").onclick = () => {
@@ -704,23 +639,13 @@ document.getElementById("load_lda_button").onclick = () => {
 }
 ```
 
-### Q24: How do I let one scatterplot draw either original coordinates or projected coordinates?
+---
 
-Answer:
-Check whether projection fields exist, then choose the corresponding fields for scales, positions, colors, and labels.
+**You:** I have a D3 scatterplot that draws `maxplaytime` on x and `rating` on y. Sometimes the data I receive has `lda1` and `lda2` fields instead, plus a `group` property with values like `"top"`, `"middle"`, or `"lower"`. How can one drawing function handle both cases and automatically switch axis domains, circle colors, circle positions, and axis labels?
 
-Original:
-
-```js
-let width = parseInt(svg.style("width"))
-let height = parseInt(svg.style("height"))
-```
-
-New:
+**Assistant:** Check for a field that only exists in one format at the start of the function, store it as a boolean, then use ternary expressions wherever the two formats need different behavior:
 
 ```js
-let width = parseInt(svg.style("width"))
-let height = parseInt(svg.style("height"))
 const isLdaData = data.length > 0 && data[0].lda1 !== undefined
 const groupColor = {
   top: "#2f80ed",
@@ -729,16 +654,7 @@ const groupColor = {
 }
 ```
 
-Original:
-
-```js
-const xScale = d3
-  .scaleLinear()
-  .domain([0, d3.max(data.map((d) => d.maxplaytime))])
-  .range([0, width - margin.left - margin.right])
-```
-
-New:
+Then branch on `isLdaData` everywhere:
 
 ```js
 const xScale = d3
@@ -749,34 +665,12 @@ const xScale = d3
   .range([0, width - margin.left - margin.right])
 ```
 
-Original:
-
-```js
-const yScale = d3
-  .scaleLinear()
-  .domain(d3.extent(data.map((d) => d.rating)))
-  .range([height - margin.top - margin.bottom, 0])
-```
-
-New:
-
 ```js
 const yScale = d3
   .scaleLinear()
   .domain(d3.extent(data.map((d) => isLdaData ? d.lda2 : d.rating)))
   .range([height - margin.top - margin.bottom, 0])
 ```
-
-Original:
-
-```js
-.attr("fill", "orange")
-.attr("r", 5)
-.attr("cx", (d) => margin.left + xScale(d.maxplaytime))
-.attr("cy", (d) => yScale(d.rating) + margin.top)
-```
-
-New:
 
 ```js
 .attr("fill", (d) => isLdaData ? groupColor[d.group] : "orange")
@@ -785,293 +679,267 @@ New:
 .attr("cy", (d) => yScale(isLdaData ? d.lda2 : d.rating) + margin.top)
 ```
 
-Original:
-
-```js
-let x_label = g_scatterplot.selectAll(".x_label").data(["Maximum playtime (minutes)"])
-```
-
-New:
-
 ```js
 let x_label = g_scatterplot.selectAll(".x_label").data([isLdaData ? "LDA 1" : "Maximum playtime (minutes)"])
 ```
-
-Original:
-
-```js
-let y_label = g_scatterplot.selectAll(".y_label").data(["Rating"])
-```
-
-New:
 
 ```js
 let y_label = g_scatterplot.selectAll(".y_label").data([isLdaData ? "LDA 2" : "Rating"])
 ```
 
-### Q999: How do I add a simple legend to explain the colors geenrated for a projection?
+---
 
-Answer: Use a D3 enter/update/exit pattern to dynamically draw color legend entries when projection data properties exist.
+**You:** I want to update the CSS colors in my project. The current values are generic:
 
-Original:
+```css
+.banner {
+  background: rgb(120, 150, 196);
+}
 
-```js
-// No equivalent code in the original template.
-```
+.sidepanel {
+  background: rgb(202, 202, 202);
+}
 
-New:
-
-```js
-  /**
-   * Drawing the legend for LDA Data
-   */
-  // We only want to show the legend when displaying LDA data
-  const legendData = isLdaData ? Object.keys(groupColor) : []
-
-  let legend = g_scatterplot.selectAll(".legend-group").data(legendData)
-
-  let legendEnter = legend
-    .enter()
-    .append("g")
-    .attr("class", "legend-group")
-
-  // Append color rectangles
-  legendEnter
-    .append("rect")
-    .attr("class", "legend-rect")
-    .attr("width", 15)
-    .attr("height", 15)
-
-  // Append text labels
-  legendEnter
-    .append("text")
-    .attr("class", "legend-text")
-    .attr("x", 25)
-    .attr("y", 12)
-    .style("font-size", "12px")
-    .style("text-transform", "capitalize") // Capitalizes 'top', 'middle', 'lower'
-
-  // Update the group positioning (placed in the top right corner)
-  let legendMerge = legendEnter.merge(legend)
-    .attr("transform", (d, i) => "translate(" + (width - margin.right - 60) + "," + (margin.top + i * 20) + ")")
-
-  // Update colored rectangles
-  legendMerge.select(".legend-rect")
-    .attr("fill", (d) => groupColor[d])
-
-  // Update text labels
-  legendMerge.select(".legend-text")
-    .text((d) => d)
-
-  // Remove legend if no longer needed
-  legend.exit().remove()
-  ```
-
-### Q998: How can I change the title dynamically by pulling the 2 variable used in the plooted data so that it would be a vs b if the variables were a and b?
-
-Answer: Extract the variable keys from the initial data point received via the payload and use them to construct an updated title string before drawing the chart.
-
-Original:
-
-```js
-document.getElementById("load_data_button").onclick = () => {
-  requestData({})
+.button:hover {
+  background: rgb(180, 180, 180);
 }
 ```
 
-New:
+I want a consistent color scheme with a dark blue header, light sidepanel background, and an orange hover accent. What hex values work well and how do I apply them?
 
-```js
-document.getElementById("load_data_button").onclick = () => {
-  document.getElementById("title").textContent = "Loading...";
-  requestData({})
+**Assistant:** Here is a cohesive palette: `#284b63` for dark blue, `#eef3f7` for a soft light background, `#f2a93b` for orange hover accents, `#1f2d36` for near-black text, `#c6d3dd` for subtle borders.
+
+```css
+.banner {
+  grid-area: banner;
+  background: #284b63;
+  color: white;
+```
+
+```css
+.sidepanel {
+  grid-area: sidepanel;
+  background: #eef3f7;
+  color: #1f2d36;
+  padding: 20px;
 }
 ```
 
-### Q997: How can I handle different visualization modes with a socket without creating a new one?
+```css
+.button {
+    width: calc(300px - 40px);
+    border-radius: 20px;
+    height: 50px;
+    font-size: 1.2em;
+    font-weight: bold;
+    background: white;
+    border: 2px solid #284b63;
+    color: #1f2d36;
+    cursor: pointer;
+}
 
-Answer: Keep the existing single socket structure. Assign a specific mode instruction to the request payload parameter block and handle title or UI modifications dynamically inside the central data handler function by checking that mode.
-
-Original:
-
-```js
-let handleData = (payload) => {
-  console.log(`Fresh data from Webserver:`)
-  console.log(payload)
-  data.scatterplot = payload.data
-  draw_scatterplot(data.scatterplot)
+.button:hover {
+    border-color: #f2a93b;
 }
 ```
 
-New:
-
-```js
-let handleData = (payload) => {
-  console.log(`Fresh data from Webserver:`)
-  console.log(payload)
-  data.scatterplot = payload.data
-
-  // Check if we requested LDA mode
-  if (payload.parameters && payload.parameters.mode === "lda") {
-    // Handle the title for LDA Button
-    document.getElementById("title").textContent = "LDA1 vs LDA2";
-  } else {
-    // Handle the title for the regular Data Button dynamically
-    let samplePoint = data.scatterplot[0];
-    
-    // Extract keys and filter out 'title' (and maybe 'group' if it exists)
-    let variables = Object.keys(samplePoint).filter(key => key !== 'title' && key !== 'group');
-    if (variables.length >= 2) {
-      document.getElementById("title").textContent = `${variables[0]} vs ${variables[1]}`;
-    }
+```css
+input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #c6d3dd;
+    border-radius: 4px;
+    box-sizing: border-box;
   }
+```
 
-  draw_scatterplot(data.scatterplot)
+---
+
+**You:** In D3, I want circles in a scatter plot to be bigger for higher numeric values. What scale type should I use for the radius, and why not a linear scale?
+
+**Assistant:** Use `d3.scaleSqrt` rather than a linear scale. The reason is that we perceive circles by **area**, not radius. Since area = π · r², a linear radius scale means doubling the data value quadruples the visual size — which is very misleading. `scaleSqrt` maps values to a radius such that area grows linearly with the data, giving an honest size encoding.
+
+```js
+const rScale = d3.scaleSqrt()
+  .domain(d3.extent(data.map((d) => d.num_of_reviews || 0)))
+  .range([3, 15])
+```
+
+```js
+.attr("r", (d) => isLdaData ? 5 : rScale(d.num_of_reviews))
+```
+
+The `|| 0` fallback handles any items where the field might be undefined.
+
+---
+
+**You:** I have a D3 scatterplot where circles are drawn like this:
+
+```js
+scatterplot_circle
+  .enter()
+  .append("circle")
+  .attr("class", "scatterplot_circle")
+  .merge(scatterplot_circle)
+  .attr("fill", (d) => isLdaData ? groupColor[d.group] : "orange")
+  .attr("r", (d) => isLdaData ? 5 : rScale(d.num_of_reviews))
+  .attr("cx", (d) => margin.left + xScale(isLdaData ? d.lda1 : d.maxplaytime))
+  .attr("cy", (d) => yScale(isLdaData ? d.lda2 : d.rating) + margin.top)
+```
+
+Each data point has a `title` field. I want to show the title in a tooltip when hovering over a circle. How do I add that?
+
+**Assistant:** You need two things: a `<div>` in the HTML to use as the tooltip, and event listeners on the circles. Add the div to your HTML:
+
+```html
+<div id="tooltip"></div>
+```
+
+Style it in CSS so it is hidden by default and positioned absolutely:
+
+```css
+#tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid #c6d3dd;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.85em;
+  pointer-events: none;
+  display: none;
 }
 ```
 
-### Q996: How can I add collapsible checkbox lists with search function to the webserver to dynamically filter the JSON data?
-
-Answer: Extract the unique values for the properties on the server and emit them upon initialization so the client can build collapsible checkbox lists with text search. Include the selected checkboxes in the standard data request, and filter the resulting dataset on the server before applying subsequent data transformations.
-
-Original:
+Then in your D3 code, select the tooltip and chain three event handlers onto the circles:
 
 ```js
-// No equivalent code in the original template.
+const tooltip = d3.select("#tooltip")
 ```
 
-New:
-
 ```js
-socket.on("getInitData", () => {
-    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
-      if (error) {
-        console.error(error)
-        return
-      }
-      const rawGames = JSON.parse(fileContent)
-      
-      const categories = [...new Set(rawGames.flatMap(g => g.types.categories || []).map(c => c.name))].filter(Boolean).sort()
-      const mechanics = [...new Set(rawGames.flatMap(g => g.types.mechanics || []).map(m => m.name))].filter(Boolean).sort()
-
-      socket.emit("initData", { categories, mechanics })
+    .on("mouseover", (event, d) => {
+      tooltip.style("display", "block").text(d.title)
     })
-  })
-```
-
-Original:
-
-```js
-socket.on("getData", (obj) => {
-    console.log(`Data request with properties ${JSON.stringify(obj)}...`)
-
-    let parameters = obj.parameters
-
-    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
-      if (error) {
-        console.error(error)
-        return
-      }
-
-      const rawGames = JSON.parse(fileContent)
-      const games =
-        parameters.mode === "lda"
-          ? calculateLdaProjection(rawGames, parameters)
-          : preprocess_boardgames(rawGames)
-
-      socket.emit("freshData", {
-        timestamp: new Date().getTime(),
-        data: games,
-        parameters: parameters,
-      })
-      console.log(`freshData emitted`)
+    .on("mousemove", (event) => {
+      tooltip
+        .style("left", (event.pageX + 12) + "px")
+        .style("top", (event.pageY - 28) + "px")
     })
-  })
-```
-
-New:
-
-```js
-socket.on("getData", (obj) => {
-    console.log(`Data request with properties ${JSON.stringify(obj)}...`)
-
-    let parameters = obj.parameters
-
-    fs.readFile(file_path + file_name, "utf8", (error, fileContent) => {
-      if (error) {
-        console.error(error)
-        return
-      }
-
-      let rawGames = JSON.parse(fileContent)
-
-      // Filtering logic
-      if (parameters.selectedCategories && parameters.selectedCategories.length > 0) {
-        rawGames = rawGames.filter(game => {
-          const gameCats = (game.types.categories || []).map(c => c.name);
-          return parameters.selectedCategories.some(cat => gameCats.includes(cat));
-        });
-      }
-      
-      if (parameters.selectedMechanics && parameters.selectedMechanics.length > 0) {
-        rawGames = rawGames.filter(game => {
-          const gameMechs = (game.types.mechanics || []).map(m => m.name);
-          return parameters.selectedMechanics.some(mech => gameMechs.includes(mech));
-        });
-      }
-
-      let games = [];
-      if (rawGames.length > 0) {
-        games = parameters.mode === "lda"
-            ? calculateLdaProjection(rawGames, parameters)
-            : preprocess_boardgames(rawGames)
-      }
-
-      socket.emit("freshData", {
-        timestamp: new Date().getTime(),
-        data: games,
-        parameters: parameters,
-      })
-      console.log(`freshData emitted`)
+    .on("mouseout", () => {
+      tooltip.style("display", "none")
     })
-  })
 ```
 
-Original:
+`pointer-events: none` on the tooltip prevents it from interfering with the mousemove events on the circles beneath it.
+
+---
+
+**You:** I have a D3 scatterplot that colors circles by group but has no legend. I want to add a small legend showing which color corresponds to which group, but only when the LDA data is shown. Here is the end of my drawing function:
 
 ```js
-// No equivalent code in the original template.
+  y_label.exit().remove()
+}
 ```
 
-New:
+How do I add a legend inside the SVG?
+
+**Assistant:** Remove any existing legend items first (so switching between modes cleans up), then append a group for each entry only when the LDA flag is true. Each group gets a colored circle and a text label:
 
 ```js
+  g_scatterplot.selectAll(".legend_item").remove()
+
+  if (isLdaData) {
+    const legendData = [
+      { label: "Top", color: groupColor.top },
+      { label: "Middle", color: groupColor.middle },
+      { label: "Lower", color: groupColor.lower },
+    ]
+
+    legendData.forEach((entry, i) => {
+      const g = g_scatterplot.append("g")
+        .attr("class", "legend_item")
+        .attr("transform", `translate(${width - margin.right + 5}, ${margin.top + 10 + i * 22})`)
+
+      g.append("circle")
+        .attr("r", 6)
+        .attr("fill", entry.color)
+
+      g.append("text")
+        .attr("x", 12)
+        .attr("y", 5)
+        .text(entry.label)
+        .style("font-size", "12px")
+    })
+  }
+```
+
+---
+
+**You:** I want to add two collapsible filter panels to the sidepanel — one for Categories and one for Mechanics — so the user can check boxes to filter which games are shown. The sidepanel currently looks like this:
+
+```html
+<div class="sidepanel">
+  <button id="load_data_button" class="button">Load data</button>
+  <label for="rank_low">Top rank cutoff</label>
+  <input type="text" id="rank_low" value="25" name="rank_low" />
+  <label for="rank_high">Middle rank cutoff</label>
+  <input type="text" id="rank_high" value="75" name="rank_high" />
+  <button id="load_lda_button" class="button">Run LDA</button>
+</div>
+```
+
+How do I add collapsible panels with a search box and a scrollable checkbox list inside each?
+
+**Assistant:** Use the HTML `<details>` and `<summary>` elements — they are natively collapsible without any JavaScript. Put a text input for search and an empty `<div>` for the checkboxes (which will be filled dynamically by JavaScript) inside each one:
+
+```html
 <details id="categories_details">
-          <summary>Categories</summary>
-          <input type="text" id="categories_search" placeholder="Search categories..." />
-          <div id="categories_list"></div>
-        </details>
-        
-        <details id="mechanics_details">
-          <summary>Mechanics</summary>
-          <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
-          <div id="mechanics_list"></div>
-        </details>
+  <summary>Categories</summary>
+  <input type="text" id="categories_search" placeholder="Search categories..." />
+  <div id="categories_list"></div>
+</details>
+
+<details id="mechanics_details">
+  <summary>Mechanics</summary>
+  <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
+  <div id="mechanics_list"></div>
+</details>
 ```
 
-Original:
+Add these after the Run LDA button inside `.sidepanel`. The `<div>` containers are filled with checkboxes by the `setupCheckboxes` function in JavaScript.
 
-```js
-// No equivalent code in the original template.
+---
+
+**You:** My sidepanel has fixed height and the content overflows when I add the category and mechanics lists. Also the checkbox lists themselves need to scroll independently. My current CSS for sidepanel is:
+
+```css
+.sidepanel {
+  grid-area: sidepanel;
+  background: #eef3f7;
+  color: #1f2d36;
+  padding: 20px;
+}
 ```
 
-New:
+What CSS do I need to add?
 
-```js
-#categories_list, #mechanics_list {
-  max-height: 250px;
+**Assistant:** Add `overflow-y: auto` to `.sidepanel` so the whole panel scrolls, then give the two list containers a fixed `max-height` with their own scroll. Also style `details` and `summary` for spacing and appearance:
+
+```css
+.sidepanel {
+  grid-area: sidepanel;
+  background: #eef3f7;
+  color: #1f2d36;
+  padding: 20px;
   overflow-y: auto;
-  border: 1px solid #ccc;
+}
+
+#categories_list, #mechanics_list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #c6d3dd;
   background: white;
   padding: 5px;
   margin-top: 5px;
@@ -1091,418 +959,18 @@ details {
   margin-top: 15px;
   cursor: pointer;
 }
+
 summary {
   font-weight: bold;
-}
-```
-
-Original:
-
-```js
-socket.on("connect", () => {
-  console.log("Connected to " + socketUrl + ".")
-})
-```
-
-New:
-
-```js
-socket.on("connect", () => {
-  console.log("Connected to " + socketUrl + ".")
-  socket.emit("getInitData")
-})
-```
-
-Original:
-
-```js
-// No equivalent code in the original template.
-```
-
-New:
-
-```js
-socket.on("initData", (payload) => {
-  console.log("Received initial data:", payload);
-  
-  const setupCheckboxes = (items, listElementId) => {
-    const listEl = document.getElementById(listElementId);
-    listEl.innerHTML = '';
-    items.forEach(item => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'checkbox-wrapper';
-      
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.id = `${listElementId}_${item}`;
-      checkbox.value = item;
-      checkbox.className = `${listElementId}_checkbox`;
-      
-      const label = document.createElement('label');
-      label.htmlFor = checkbox.id;
-      label.textContent = item;
-      
-      wrapper.appendChild(checkbox);
-      wrapper.appendChild(label);
-      listEl.appendChild(wrapper);
-    });
-  };
-
-  setupCheckboxes(payload.categories, "categories_list");
-  setupCheckboxes(payload.mechanics, "mechanics_list");
-});
-
-const setupSearch = (searchInputId, listElementId) => {
-  document.getElementById(searchInputId).addEventListener("input", (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const listEl = document.getElementById(listElementId);
-    const wrappers = listEl.getElementsByClassName("checkbox-wrapper");
-    Array.from(wrappers).forEach(wrapper => {
-      const labelText = wrapper.textContent.toLowerCase();
-      if (labelText.includes(searchTerm)) {
-        wrapper.style.display = "";
-      } else {
-        wrapper.style.display = "none";
-      }
-    });
-  });
-};
-
-setupSearch("categories_search", "categories_list");
-setupSearch("mechanics_search", "mechanics_list");
-```
-
-Original:
-
-```js
-let requestData = (parameters) => {
-  console.log(`requesting data from webserver (every 2sec)`)
-
-  socket.emit("getData", {
-    parameters,
-  })
-}
-```
-
-New:
-
-```js
-let requestData = (parameters) => {
-  console.log(`requesting data from webserver (every 2sec)`)
-
-  const selectedCategories = Array.from(document.querySelectorAll('.categories_list_checkbox:checked')).map(cb => cb.value);
-  const selectedMechanics = Array.from(document.querySelectorAll('.mechanics_list_checkbox:checked')).map(cb => cb.value);
-
-  socket.emit("getData", {
-    parameters: {
-      ...parameters,
-      selectedCategories,
-      selectedMechanics
-    }
-  })
+  color: #284b63;
 }
 ```
 
 ---
 
-**You:** The three rank cutoff columns (Top, Mid, Lower) each have a label on top and an input below, arranged as three flex columns side by side. I want to rearrange them so the inputs appear between the label columns instead of under them like `[Top label] [input] [Mid label] [input] [Low label]` while keeping labels and inputs on separate rows vertically. Also the Lower column has two separate spans ("Lower:" and the range hint) while Top and Mid each have one combined label span. I want Low to match that appearance too. And rename "Lower" to "Low" throughout.
+**You:** My server's `websocket.js` only has a `getData` listener. I need to add a `getInitData` listener that reads the JSON file once on connect and emits the list of all unique category names and mechanic names back to the client. The data structure has `game.types.categories` and `game.types.mechanics`, each an array of objects with a `.name` property. How do I do that?
 
-**Professor:** Replace the three `<div class="rank-cutoff-col">` wrappers with flat children directly inside the row, and switch the row from `display: flex` to `display: grid` with five columns and `grid-template-areas` to control placement precisely:
-
-```html
-<div class="rank-cutoff-row">
-  <span id="rank_top_label" class="rank-col-label">Top: 1–25</span>
-  <input type="text" id="rank_low" value="25" name="rank_low" />
-  <span id="rank_high_label" class="rank-col-label">Mid: 26–75</span>
-  <input type="text" id="rank_high" value="75" name="rank_high" />
-  <span id="rank_low_hint" class="rank-col-label">Low: 76–100</span>
-</div>
-```
-
-```css
-.rank-cutoff-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-  grid-template-rows: auto auto;
-  grid-template-areas:
-    "top  .    mid  .    low"
-    ".    rlo  .    rhi  .  ";
-  column-gap: 8px;
-  row-gap: 2px;
-  margin: 4px 0;
-}
-
-#rank_top_label  { grid-area: top; }
-#rank_high_label { grid-area: mid; }
-#rank_low_hint   { grid-area: low; color: #c0392b; }
-#rank_low        { grid-area: rlo; }
-#rank_high       { grid-area: rhi; }
-
-.rank-cutoff-row input[type=text] {
-  padding: 4px 6px;
-  margin: 0;
-  text-align: center;
-  font-size: 0.9em;
-}
-```
-
-The `.` in `grid-template-areas` is a null cell — it leaves that position empty. Labels land in row 1 at columns 1, 3, 5; inputs land in row 2 at columns 2 and 4. Because `#rank_low_hint` now uses the same `rank-col-label` class as the other two labels, all three columns look identical. In `index.js`, rename `rankLowerHint` to `rankLowHint`, update the element id to `rank_low_hint`, and update the text update to include the prefix: `` rankLowHint.textContent = `Low: ${hi + 1}–100` ``.
-
----
-
-**You:** I want a small "Reset Filters" button next to the "Data Filters" section header. Clicking it should uncheck all category and mechanic checkboxes, clear the search inputs, and reset the year preset back to "All". The button should look like the existing buttons but be much smaller.
-
-**Professor:** Wrap the `<h3>` in a flex row container and place the button beside it:
-
-```html
-<div class="panel-header-row">
-  <h3 class="panel-header">Data Filters</h3>
-  <button id="reset_filters_button" class="button button-sm">Reset Filters</button>
-</div>
-```
-
-Add CSS for the row and a small-button modifier. Use the combined selector `.button.button-sm` — a two-class selector has higher specificity than the single-class `.button` rule, so it wins regardless of source order in the file:
-
-```css
-.panel-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.panel-header {
-  margin: 0;
-}
-
-.button.button-sm {
-  width: auto;
-  height: 20px;
-  padding: 0 7px;
-  font-size: 0.6em;
-  border-radius: 10px;
-}
-```
-
-In `index.js`, the handler reads checked checkboxes, clears them, resets the search fields by setting `.value = ""` and dispatching a synthetic `input` event (so the search filter re-runs and shows all items again), then calls `activatePreset` with the first preset button:
-
-```js
-document.getElementById("reset_filters_button").onclick = () => {
-  document.querySelectorAll(".categories_list_checkbox, .mechanics_list_checkbox").forEach(cb => cb.checked = false)
-  const categoriesSearch = document.getElementById("categories_search")
-  const mechanicsSearch  = document.getElementById("mechanics_search")
-  categoriesSearch.value = ""
-  mechanicsSearch.value  = ""
-  categoriesSearch.dispatchEvent(new Event("input"))
-  mechanicsSearch.dispatchEvent(new Event("input"))
-  activatePreset(yearPresetBtns[0])
-}
-```
-
-`dispatchEvent(new Event("input"))` is necessary because the search listener is registered with `addEventListener("input", ...)`, so programmatically setting `.value` does not trigger it automatically.
-
----
-
-**You:** I want to add a toggle switch in the sidebar that makes all scatterplot circles the same fixed radius when activated, and restores the original review-based sizing when deactivated. The chart should update immediately when the toggle is flipped, without requiring another click on Load Data.
-
-**Professor:** Add the toggle to the HTML using a hidden checkbox and a styled `<span>` for the pill track:
-
-```html
-<div class="toggle-row">
-  <label for="uniform_size_toggle" class="toggle-label-text">Uniform circle size</label>
-  <label class="toggle-switch">
-    <input type="checkbox" id="uniform_size_toggle" />
-    <span class="toggle-slider"></span>
-  </label>
-</div>
-```
-
-Style it in CSS with a sliding knob and the existing dark-blue active color:
-
-```css
-.toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 10px 0 6px 0;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 36px;
-  height: 20px;
-}
-
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #c6d3dd;
-  border-radius: 20px;
-  transition: background-color 0.2s;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: transform 0.2s;
-}
-
-.toggle-switch input:checked + .toggle-slider { background-color: #284b63; }
-.toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
-```
-
-In `scatterplot.js`, read the toggle state when computing `r`, and skip the size legend when uniform mode is on (showing it would be misleading since all circles are the same):
-
-```js
-.attr("r", (d) => {
-  const uniform = document.getElementById("uniform_size_toggle")?.checked
-  return uniform ? 4 : (isLdaData ? 5 : rScale(d.num_of_reviews))
-})
-```
-
-```js
-const uniformSize = document.getElementById("uniform_size_toggle")?.checked
-if (!isLdaData && !uniformSize) {
-  // draw size legend
-}
-```
-
-In `index.js`, add a `change` listener that immediately redraws if data is already loaded:
-
-```js
-document.getElementById("uniform_size_toggle").addEventListener("change", () => {
-  if (data.scatterplot) draw_scatterplot(data.scatterplot)
-})
-```
-
-The listener captures the `data` binding rather than its value, so even though `data` is declared later in the module, the closure correctly reads `data.scatterplot` at the time the event fires.
-
----
-
-**You:** How do I add a color-coded legend to a D3 chart that only appears when the data has group assignments?
-
-**Professor:** Use D3's enter/update/exit pattern with `<g>` elements, one per group. Bind the group keys to the selection so the legend automatically appears when group data is present and disappears otherwise:
-
-```js
-const legendData = isLdaData ? Object.keys(groupColor) : []
-
-let legend = g_scatterplot.selectAll(".legend-group").data(legendData)
-
-let legendEnter = legend
-  .enter()
-  .append("g")
-  .attr("class", "legend-group")
-
-legendEnter
-  .append("rect")
-  .attr("class", "legend-rect")
-  .attr("width", 15)
-  .attr("height", 15)
-
-legendEnter
-  .append("text")
-  .attr("class", "legend-text")
-  .attr("x", 25)
-  .attr("y", 12)
-  .style("font-size", "12px")
-  .style("text-transform", "capitalize")
-
-let legendMerge = legendEnter.merge(legend)
-  .attr("transform", (d, i) => "translate(" + (width - margin.right - 60) + "," + (margin.top + i * 20) + ")")
-
-legendMerge.select(".legend-rect")
-  .attr("fill", (d) => groupColor[d])
-
-legendMerge.select(".legend-text")
-  .text((d) => d)
-
-legend.exit().remove()
-```
-
-When `isLdaData` is false, `legendData` is an empty array, so all existing legend groups are removed by `.exit().remove()`.
-
----
-
-**You:** How do I update a dashboard title dynamically to reflect the names of the two variables currently being displayed?
-
-**Professor:** Show a "Loading…" placeholder immediately on button click, then in the data handler derive the title from the keys of the first data point. Filter out metadata fields so only the actual variable names are used:
-
-```js
-document.getElementById("load_data_button").onclick = () => {
-  document.getElementById("title").textContent = "Loading...";
-  requestData({})
-}
-```
-
-```js
-let handleData = (payload) => {
-  data.scatterplot = payload.data
-
-  if (payload.parameters && payload.parameters.mode === "lda") {
-    document.getElementById("title").textContent = "LDA1 vs LDA2";
-  } else {
-    let samplePoint = data.scatterplot[0];
-    let variables = Object.keys(samplePoint).filter(key => key !== 'title' && key !== 'group');
-    if (variables.length >= 2) {
-      document.getElementById("title").textContent = `${variables[0]} vs ${variables[1]}`;
-    }
-  }
-
-  draw_scatterplot(data.scatterplot)
-}
-```
-
----
-
-**You:** How do I support multiple display modes over a single socket connection, updating the title and visualization differently for each mode?
-
-**Professor:** Pass a `mode` field in the request parameters object and inspect it in the central data handler. Branch on `payload.parameters.mode` to apply mode-specific UI updates before drawing:
-
-```js
-document.getElementById("load_lda_button").onclick = () => {
-  let rankLow  = document.getElementById("rank_low").value
-  let rankHigh = document.getElementById("rank_high").value
-  requestData({ mode: "lda", rankLow, rankHigh })
-}
-```
-
-```js
-let handleData = (payload) => {
-  data.scatterplot = payload.data
-
-  if (payload.parameters && payload.parameters.mode === "lda") {
-    document.getElementById("title").textContent = "LDA1 vs LDA2";
-  } else {
-    let samplePoint = data.scatterplot[0];
-    let variables = Object.keys(samplePoint).filter(key => key !== 'title' && key !== 'group');
-    if (variables.length >= 2) {
-      document.getElementById("title").textContent = `${variables[0]} vs ${variables[1]}`;
-    }
-  }
-
-  draw_scatterplot(data.scatterplot)
-}
-```
-
-The mode value travels from the button click → `requestData` → socket emission → server → back in `freshData`'s `payload.parameters`, so the handler can distinguish modes without adding a separate socket event.
-
----
-
-**You:** How do I add collapsible, searchable checkbox filter lists to a real-time socket dashboard?
-
-**Professor:** On the server, compute the unique filter values once on connection and emit them as an init event. On the client, build the checkbox list from that payload, wire a live-search input to show/hide items, and include the checked values in each data request. Server-side filtering then applies before the data transformation runs.
-
-Server — emit unique values on connection:
+**Assistant:** Add a new `socket.on("getInitData", ...)` listener before `getData`. Read the file, extract unique names using `flatMap` + `Set`, sort them, and emit them as `initData`:
 
 ```js
 socket.on("getInitData", () => {
@@ -1516,7 +984,11 @@ socket.on("getInitData", () => {
 })
 ```
 
-Apply the selected filters in the data handler before the data transformation:
+---
+
+**You:** In my `getData` listener I currently pass `rawGames` directly to `calculateLdaProjection` or `preprocess_boardgames`. I want to filter `rawGames` first based on `parameters.selectedCategories` and `parameters.selectedMechanics` arrays before running the analysis. How do I add that?
+
+**Assistant:** After parsing the JSON, filter `rawGames` in-place before calling either function. Check if the array is non-empty before filtering to avoid accidentally returning zero games when no filter is selected:
 
 ```js
 let rawGames = JSON.parse(fileContent)
@@ -1535,108 +1007,66 @@ if (parameters.selectedMechanics && parameters.selectedMechanics.length > 0) {
   })
 }
 
-let games = rawGames.length > 0
-  ? (parameters.mode === "lda" ? calculateLdaProjection(rawGames, parameters) : preprocess_boardgames(rawGames))
-  : []
+let games = []
+if (rawGames.length > 0) {
+  games = parameters.mode === "lda"
+    ? calculateLdaProjection(rawGames, parameters)
+    : preprocess_boardgames(rawGames)
+}
 ```
 
-HTML — collapsible `<details>` sections with a search input and an empty list container:
+---
 
-```html
-<details id="categories_details">
-  <summary>Categories</summary>
-  <input type="text" id="categories_search" placeholder="Search categories..." />
-  <div id="categories_list"></div>
-</details>
-
-<details id="mechanics_details">
-  <summary>Mechanics</summary>
-  <input type="text" id="mechanics_search" placeholder="Search mechanics..." />
-  <div id="mechanics_list"></div>
-</details>
-```
-
-CSS:
-
-```css
-#categories_list, #mechanics_list {
-  max-height: 250px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  background: white;
-  padding: 5px;
-  margin-top: 5px;
-}
-
-.checkbox-wrapper {
-  margin: 2px 0;
-  display: flex;
-  align-items: center;
-}
-
-.checkbox-wrapper input {
-  margin-right: 8px;
-}
-
-details { margin-top: 15px; cursor: pointer; }
-summary { font-weight: bold; }
-```
-
-Client — request init data on connect, build checkboxes, and wire search:
+**You:** My `index.js` handles the `freshData` event like this:
 
 ```js
-socket.on("connect", () => {
-  socket.emit("getInitData")
-})
-
-socket.on("initData", (payload) => {
-  const setupCheckboxes = (items, listElementId) => {
-    const listEl = document.getElementById(listElementId)
-    listEl.innerHTML = ''
-    items.forEach(item => {
-      const wrapper  = document.createElement('div')
-      wrapper.className = 'checkbox-wrapper'
-      const checkbox = document.createElement('input')
-      checkbox.type      = 'checkbox'
-      checkbox.id        = `${listElementId}_${item}`
-      checkbox.value     = item
-      checkbox.className = `${listElementId}_checkbox`
-      const label    = document.createElement('label')
-      label.htmlFor  = checkbox.id
-      label.textContent = item
-      wrapper.appendChild(checkbox)
-      wrapper.appendChild(label)
-      listEl.appendChild(wrapper)
-    })
-  }
-  setupCheckboxes(payload.categories, "categories_list")
-  setupCheckboxes(payload.mechanics,  "mechanics_list")
-})
-
-const setupSearch = (searchInputId, listElementId) => {
-  document.getElementById(searchInputId).addEventListener("input", (e) => {
-    const searchTerm = e.target.value.toLowerCase()
-    Array.from(document.getElementById(listElementId).getElementsByClassName("checkbox-wrapper")).forEach(wrapper => {
-      wrapper.style.display = wrapper.textContent.toLowerCase().includes(searchTerm) ? "" : "none"
-    })
-  })
+let handleData = (payload) => {
+  data.scatterplot = payload.data
+  draw_scatterplot(data.scatterplot)
 }
-
-setupSearch("categories_search", "categories_list")
-setupSearch("mechanics_search",  "mechanics_list")
 ```
 
-Include the checked values in every data request:
+I want the banner title to update automatically: show "LDA 1 vs LDA 2" after running LDA, and "Maximum Playtime vs Rating" for the raw scatterplot. The banner div has `id="title"`. How do I add that?
+
+**Assistant:** Check `payload.parameters.mode` inside `handleData` and set `textContent` on the title element:
+
+```js
+let handleData = (payload) => {
+  data.scatterplot = payload.data
+
+  if (payload.parameters && payload.parameters.mode === "lda") {
+    document.getElementById("title").textContent = "LDA 1 vs LDA 2"
+  } else {
+    document.getElementById("title").textContent = "Maximum Playtime vs Rating"
+  }
+
+  draw_scatterplot(data.scatterplot)
+}
+```
+
+Use `textContent` (not `innerHTML`) since the strings are static — no HTML parsing needed.
+
+---
+
+**You:** My `index.js` emits `getData` with just the user parameters. Now that I have category and mechanic checkboxes, I need to also send which ones are checked. The checkboxes have class `categories_list_checkbox` and `mechanics_list_checkbox`. How do I read the checked values and include them in the request?
+
+**Assistant:** Use `querySelectorAll` with the `:checked` pseudo-class to get the checked boxes, then map to their `.value`. Spread the existing parameters and add the two arrays:
 
 ```js
 let requestData = (parameters) => {
-  const selectedCategories = Array.from(document.querySelectorAll('.categories_list_checkbox:checked')).map(cb => cb.value)
-  const selectedMechanics  = Array.from(document.querySelectorAll('.mechanics_list_checkbox:checked')).map(cb => cb.value)
+  const selectedCategories = Array.from(document.querySelectorAll(".categories_list_checkbox:checked")).map(cb => cb.value)
+  const selectedMechanics  = Array.from(document.querySelectorAll(".mechanics_list_checkbox:checked")).map(cb => cb.value)
+
   socket.emit("getData", {
-    parameters: { ...parameters, selectedCategories, selectedMechanics }
+    parameters: {
+      ...parameters,
+      selectedCategories,
+      selectedMechanics,
+    }
   })
 }
 ```
+
 If no boxes are checked, both arrays are empty `[]` and the server filter is skipped (no filtering applied).
 
 ---
@@ -2177,4 +1607,3 @@ The rect gets the same `"legend_item"` class so the existing `g_scatterplot.sele
 `.toFixed(2)` keeps the rating to two decimal places, `.toLocaleString()` adds thousands separators to the review count, and `.toFixed(3)` gives enough precision for the LDA coordinates.
 
 This runs after the category and mechanics filters, so all three filters stack together.
-
