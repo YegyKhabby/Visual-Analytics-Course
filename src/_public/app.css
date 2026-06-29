@@ -278,6 +278,7 @@ input[type=text], select {
   -webkit-appearance: none;
   width: 18px;
   height: 18px;
+  margin-top: -9px;
   border-radius: 50%;
   pointer-events: auto;
   cursor: pointer;
