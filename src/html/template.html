@@ -72,18 +72,11 @@
           <input type="range" id="rank_high_range" min="1" max="99" value="75" step="1" />
         </div>
         <div class="rank-cutoff-row">
-          <div class="rank-cutoff-col">
-            <span id="rank_top_label" class="rank-col-label">Top: 1–25</span>
-            <input type="text" id="rank_low" value="25" name="rank_low" />
-          </div>
-          <div class="rank-cutoff-col">
-            <span id="rank_high_label" class="rank-col-label">Mid: 26–75</span>
-            <input type="text" id="rank_high" value="75" name="rank_high" />
-          </div>
-          <div class="rank-cutoff-col rank-lower-col">
-            <span class="rank-col-label">Lower:</span>
-            <span id="rank_lower_hint" class="rank-lower-hint">76–100</span>
-          </div>
+          <span id="rank_top_label" class="rank-col-label">Top: 1–25</span>
+          <input type="text" id="rank_low" value="25" name="rank_low" />
+          <span id="rank_high_label" class="rank-col-label">Mid: 26–75</span>
+          <input type="text" id="rank_high" value="75" name="rank_high" />
+          <span id="rank_low_hint" class="rank-col-label">Low: 76–100</span>
         </div>
         <button id="load_lda_button" class="button">Run LDA</button>
       </div>

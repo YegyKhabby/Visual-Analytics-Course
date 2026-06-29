@@ -360,43 +360,37 @@ input[type=text], select {
   box-sizing: border-box;
 }
 
-/* compact two-column layout for rank cutoff inputs */
+/* 5-column grid: labels in row 1 (cols 1/3/5), inputs in row 2 (cols 2/4) */
 .rank-cutoff-row {
-  display: flex;
-  gap: 8px;
-  margin: 4px 0 4px 0;
-}
-
-.rank-cutoff-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "top  .    mid  .    low"
+    ".    rlo  .    rhi  .  ";
+  column-gap: 8px;
+  row-gap: 2px;
+  margin: 4px 0;
 }
 
 .rank-col-label {
   font-size: 0.78em;
-  color: #555;
-  margin-bottom: 2px;
+  font-weight: 700;
   display: block;
   text-align: center;
 }
 
-.rank-cutoff-col input[type=text] {
+#rank_top_label  { grid-area: top; color: #2f80ed; }
+#rank_high_label { grid-area: mid; color: #f2a93b; }
+#rank_low_hint   { grid-area: low; color: #c0392b; }
+#rank_low        { grid-area: rlo; }
+#rank_high       { grid-area: rhi; }
+
+.rank-cutoff-row input[type=text] {
   width: 100%;
   padding: 4px 6px;
   margin: 0;
   text-align: center;
   font-size: 0.9em;
   box-sizing: border-box;
-}
-
-.rank-lower-col {
-  justify-content: center;
-  align-items: center;
-}
-
-.rank-lower-hint {
-  font-size: 0.85em;
-  color: #c0392b;
-  text-align: center;
 }

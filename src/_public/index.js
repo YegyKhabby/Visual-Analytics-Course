@@ -173,7 +173,7 @@ const rankHighInput = document.getElementById("rank_high")
 const rankTrack = document.getElementById("rank_track")
 const rankTopLabel = document.getElementById("rank_top_label")
 const rankHighLabel = document.getElementById("rank_high_label")
-const rankLowerHint = document.getElementById("rank_lower_hint")
+const rankLowHint = document.getElementById("rank_low_hint")
 let ldaActive = false
 
 function requestLdaData() {
@@ -194,7 +194,7 @@ function updateRankTrackOnly(lo, hi) {
   rankTrack.style.background = `linear-gradient(to right, #2f80ed 0%, #2f80ed ${loPercent}%, #f2a93b ${loPercent}%, #f2a93b ${hiPercent}%, #c0392b ${hiPercent}%, #c0392b 100%)`
   rankTopLabel.textContent = `Top: 1–${lo}`
   rankHighLabel.textContent = `Mid: ${lo + 1}–${hi}`
-  rankLowerHint.textContent = `${hi + 1}–100`
+  rankLowHint.textContent = `Low: ${hi + 1}–100`
   rankLowRange.style.zIndex = lo > RANK_MAX - 10 ? 3 : 2
   rankHighRange.style.zIndex = lo > RANK_MAX - 10 ? 2 : 3
 }
